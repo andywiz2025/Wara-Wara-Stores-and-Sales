@@ -1,0 +1,9 @@
+{
+  "apiKey": "PLACEHOLDER",
+  "authDomain": "PLACEHOLDER",
+  "projectId": "PLACEHOLDER.firebaseapp.com",
+  "storageBucket": "PLACEHOLDER.appspot.com",
+  "messagingSenderId": "PLACEHOLDER",
+  "appId": "PLACEHOLDER",
+  "firestoreDatabaseId": "(default)"
+}

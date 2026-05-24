@@ -1,0 +1,6 @@
+{
+  "name": "Wara Wara Stores & Sales App",
+  "description": "An offline-first resilient retail stores and sales registry custom built for Koinadugu. Features strict validation, live inventory offloads, and To-Be-Collected (TBC) order tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

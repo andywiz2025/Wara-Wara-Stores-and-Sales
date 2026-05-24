@@ -1,0 +1,160 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Represents an inventory item at Wara Wara Stores.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique custom SKU matching the document ID, e.g., 'WWS-001'"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the product"
+        },
+        "category": {
+          "type": "string",
+          "description": "Product category, e.g., Tools, Plumbing, Electrical, etc."
+        },
+        "current_stock": {
+          "type": "number",
+          "description": "Available stock on the shelves ready for purchase"
+        },
+        "total_offloaded": {
+          "type": "number",
+          "description": "Historical accumulated stock received at offloading"
+        },
+        "unit_price": {
+          "type": "number",
+          "description": "Price per unit in Sierra Leonean Leone (SLe)"
+        }
+      },
+      "required": ["id", "name", "category", "current_stock", "total_offloaded", "unit_price"]
+    },
+    "StaffProfile": {
+      "title": "StaffProfile",
+      "description": "Represents access credentials and permissions for shop staff.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "User UID from Firebase Auth"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the staff member"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "staff"],
+          "description": "Auth role determining administrative or floor staff permissions"
+        },
+        "permissions": {
+          "type": "object",
+          "description": "Fine-grained capability flags for staff users",
+          "properties": {
+            "can_update_stock": {
+              "type": "boolean"
+            },
+            "can_process_sales": {
+              "type": "boolean"
+            }
+          },
+          "required": ["can_update_stock", "can_process_sales"]
+        }
+      },
+      "required": ["uid", "name", "role", "permissions"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "A transaction entry in the shop's sales ledger.",
+      "type": "object",
+      "properties": {
+        "sale_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "staff_id": {
+          "type": "string",
+          "description": "UID of the staff who processed this sale"
+        },
+        "total_amount": {
+          "type": "number"
+        },
+        "payment_method": {
+          "type": "string",
+          "enum": ["cash", "cheque", "mobile_money", "tbc"]
+        },
+        "reference_details": {
+          "type": "string",
+          "description": "Optional details, e.g., cheque serial or transaction reference"
+        },
+        "items": {
+          "type": "array",
+          "description": "List of products and quantities sold in this transaction"
+        }
+      },
+      "required": ["sale_id", "timestamp", "staff_id", "total_amount", "payment_method", "items"]
+    },
+    "TBCRegistry": {
+      "title": "TBCRegistry",
+      "description": "To Be Collected (TBC) registry record for products paid for but not yet collected.",
+      "type": "object",
+      "properties": {
+        "tbc_id": {
+          "type": "string"
+        },
+        "customer_name": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "description": "List of products awaiting collection"
+        },
+        "total_amount": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "collected", "expired"]
+        },
+        "expiry_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "collected_by": {
+          "type": "string",
+          "description": "Optionally populated when status becomes collected"
+        },
+        "collected_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Optionally populated when status becomes collected"
+        }
+      },
+      "required": ["tbc_id", "customer_name", "items", "total_amount", "status", "expiry_date"]
+    }
+  },
+  "firestore": {
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Inventory ledger catalog"
+    },
+    "staff_profiles/{userId}": {
+      "schema": "StaffProfile",
+      "description": "Profile data and granular permissions for staff members"
+    },
+    "sales_ledger/{saleId}": {
+      "schema": "Sale",
+      "description": "Irreversible financial ledger of all completed sales"
+    },
+    "tbc_registry/{tbcId}": {
+      "schema": "TBCRegistry",
+      "description": "Registry tracking paid products slated for later collection"
+    }
+  }
+}
