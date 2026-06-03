@@ -137,6 +137,141 @@
         }
       },
       "required": ["tbc_id", "customer_name", "items", "total_amount", "status", "expiry_date"]
+    },
+    "StoreNotification": {
+      "title": "StoreNotification",
+      "description": "Notification or system alert",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["info", "warning"]
+        },
+        "read": {
+          "type": "boolean"
+        }
+      },
+      "required": ["id", "message", "timestamp", "type", "read"]
+    },
+    "Expenditure": {
+      "title": "Expenditure",
+      "description": "Store operational expenditure ledger",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recorded_by": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "description", "amount", "timestamp", "recorded_by", "category"]
+    },
+    "BankDeposit": {
+      "title": "BankDeposit",
+      "description": "Deposits of cash into store bank account",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "bank_name": {
+          "type": "string"
+        },
+        "deposited_by": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "recorded_by": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "amount", "bank_name", "deposited_by", "timestamp", "recorded_by"]
+    },
+    "CreditRegistry": {
+      "title": "CreditRegistry",
+      "description": "To track credit sales, outstanding customer debt, and settlement repayment histories.",
+      "type": "object",
+      "properties": {
+        "credit_id": {
+          "type": "string"
+        },
+        "customer_name": {
+          "type": "string"
+        },
+        "customer_phone": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array"
+        },
+        "total_amount": {
+          "type": "number"
+        },
+        "amount_paid": {
+          "type": "number"
+        },
+        "remaining_balance": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["unpaid", "partial", "paid"]
+        },
+        "due_date": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "recorded_by": {
+          "type": "string"
+        },
+        "repayments": {
+          "type": "array"
+        }
+      },
+      "required": ["credit_id", "customer_name", "items", "total_amount", "amount_paid", "remaining_balance", "status", "due_date", "timestamp", "recorded_by"]
+    },
+    "GoodsCategory": {
+      "title": "GoodsCategory",
+      "description": "To track custom product category classifications.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": ["name"]
     }
   },
   "firestore": {
@@ -155,6 +290,26 @@
     "tbc_registry/{tbcId}": {
       "schema": "TBCRegistry",
       "description": "Registry tracking paid products slated for later collection"
+    },
+    "credits_registry/{creditId}": {
+      "schema": "CreditRegistry",
+      "description": "Registry tracking customer debt, overall credit balances, and repayments"
+    },
+    "goods_categories/{categoryId}": {
+      "schema": "GoodsCategory",
+      "description": "Registry tracking custom product categories"
+    },
+    "notifications/{alertId}": {
+      "schema": "StoreNotification",
+      "description": "Alerts and notifications board"
+    },
+    "expenditures/{expenditureId}": {
+      "schema": "Expenditure",
+      "description": "Expenditure ledger details"
+    },
+    "bank_deposits/{depositId}": {
+      "schema": "BankDeposit",
+      "description": "Deposited shop earnings into bank account"
     }
   }
 }

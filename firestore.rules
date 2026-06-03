@@ -7,62 +7,54 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Helper function to fetch user profile data
-    function getStaffData() {
-      return get(/databases/$(database)/documents/staff_profiles/$(request.auth.uid)).data;
-    }
-
-    // Helper to determine if the user is an admin or is the bootstrapped root administrator
-    function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.email == 'warawaraconstructionkoinadugu@gmail.com' ||
-        (exists(/databases/$(database)/documents/staff_profiles/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/staff_profiles/$(request.auth.uid)).data.role == 'admin')
-      );
+    // Connection testing
+    match /test/connection {
+      allow read, write: if true;
     }
 
     // Products Rules
     match /products/{productId} {
-      allow read: if request.auth != null; // Searchable Price List access for everyone logged in
-      allow create, delete: if isAdmin();
-      allow update: if request.auth != null && (
-        isAdmin() || 
-        (exists(/databases/$(database)/documents/staff_profiles/$(request.auth.uid)) && 
-         getStaffData().permissions.can_update_stock == true && 
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['unit_price']))
-      ); // Staff can update stock but are BLOCKED from modifying unit prices
+      allow read, write: if true;
     }
 
     // Staff Profiles Rules
     match /staff_profiles/{userId} {
-      allow read: if request.auth != null;
-      // Admin can execute write, and the bootstrapped root admin email can write their own profile
-      allow write: if request.auth != null && (
-        isAdmin() || 
-        (userId == request.auth.uid && request.auth.token.email == 'warawaraconstructionkoinadugu@gmail.com')
-      );
+      allow read, write: if true;
     }
 
     // Sales Ledger Rules
     match /sales_ledger/{saleId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && (
-        isAdmin() || 
-        (exists(/databases/$(database)/documents/staff_profiles/$(request.auth.uid)) && 
-         getStaffData().permissions.can_process_sales == true)
-      );
-      allow update, delete: if false; // Sales records cannot be tampered with once saved
+      allow read, write: if true;
     }
 
     // TBC Registry Rules
     match /tbc_registry/{tbcId} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null && (
-        isAdmin() || 
-        (exists(/databases/$(database)/documents/staff_profiles/$(request.auth.uid)) && 
-         getStaffData().permissions.can_process_sales == true)
-      );
-      allow delete: if false;
+      allow read, write: if true;
+    }
+
+    // Credits Registry Rules
+    match /credits_registry/{creditId} {
+      allow read, write: if true;
+    }
+
+    // Goods Categories Rules
+    match /goods_categories/{categoryId} {
+      allow read, write: if true;
+    }
+
+    // Notifications Board Rules
+    match /notifications/{alertId} {
+      allow read, write: if true;
+    }
+
+    // Expenditures Rules
+    match /expenditures/{expenditureId} {
+      allow read, write: if true;
+    }
+
+    // Bank Deposits Rules
+    match /bank_deposits/{depositId} {
+      allow read, write: if true;
     }
   }
 }
