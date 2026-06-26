@@ -779,7 +779,7 @@ function MainAppContent() {
                             </div>
                             
                             <div class="footer">
-                              <p>All rights reserved. This software is the sole property of Wara Wara Construction and General Services and Wata Sai Stone Investment.</p>
+                              <p>All rights reserved. This software is the sole property of Wara Wara Construction and General Services and Watasai Stone Investment.</p>
                               <p style="font-weight: bold; font-size: 11pt;">Handbook produced and application developed by Andrew Yandi Yembeh Mansaray, Software Developer (andrewdrive2025@gmail.com)</p>
                             </div>
                             <script>
@@ -1798,7 +1798,7 @@ function MainAppContent() {
       {/* Decorative resilient footer */}
       <footer className="bg-slate-900 border-t border-slate-800 py-6 text-center text-slate-300 text-xs font-mono px-4 mb-4 md:mb-0 space-y-2">
         <p className="font-semibold text-slate-300">
-          All rights reserved this software is a property of Wara Wara Construction and General Services and Wata Sai Stone Investment .
+          All rights reserved this software is a property of Wara Wara Construction and General Services and Watasai Stone Investment .
         </p>
         <p className="text-emerald-400 font-extrabold text-[11px] uppercase tracking-wider">
           Software built and managed by Andrew Tech Solutions (andrewdrive2025@gmail.com)

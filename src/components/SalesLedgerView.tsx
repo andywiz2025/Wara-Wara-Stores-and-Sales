@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useStore } from "../context/StoreContext";
-import { COMPANY_SOFTWARE_FOOTER } from "./CompanyHeader";
+import { COMPANY_SOFTWARE_FOOTER, CompanyLetterhead } from "./CompanyHeader";
 import { Sale } from "../types";
 import { exportSalesLedgerToExcel } from "../utils/excelExport";
 import {
@@ -28,6 +28,7 @@ export default function SalesLedgerView() {
     sales, 
     expenditures, 
     bankDeposits, 
+    credits,
     executeAddExpenditure, 
     executeAddBankDeposit, 
     currentUser,
@@ -38,6 +39,7 @@ export default function SalesLedgerView() {
   const isAdmin = currentUser?.role === "admin";
   const [searchQuery, setSearchQuery] = useState("");
   const [activeSale, setActiveSale] = useState<Sale | null>(null);
+  const [selectedSaleForPrint, setSelectedSaleForPrint] = useState<Sale | null>(null);
 
   // Root Nabieu Transaction Overrides States
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
@@ -884,7 +886,7 @@ export default function SalesLedgerView() {
                         <Eye className="h-4 w-4" />
                       </button>
 
-                      {currentUser?.username?.toLowerCase() === "nabieu" && (
+                      {(currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu") && (
                         <>
                           <button
                             onClick={() => {
@@ -1309,16 +1311,233 @@ export default function SalesLedgerView() {
               </div>
             </div>
 
-            {/* Close */}
-            <button
-              onClick={() => setActiveSale(null)}
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs py-2 rounded-lg transition cursor-pointer"
-            >
-              Verify & Dismiss
-            </button>
+            {/* Actions */}
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setSelectedSaleForPrint(activeSale)}
+                className="flex-1 bg-indigo-650 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 px-3 rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+              >
+                <span>🖨️</span> Print Ticket
+              </button>
+              <button
+                onClick={() => setActiveSale(null)}
+                className="flex-1 bg-slate-805 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs py-2.5 px-3 rounded-lg transition cursor-pointer"
+              >
+                Verify & Dismiss
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Re-printable Receipt Modal */}
+      {selectedSaleForPrint && (() => {
+        const isCredit = selectedSaleForPrint.payment_method === "credit";
+        const matchedCredit = isCredit 
+          ? (credits || []).find(c => selectedSaleForPrint.reference_details?.includes(c.credit_id) || (c.customer_name === selectedSaleForPrint.customer_name && Math.abs(c.amount_paid - selectedSaleForPrint.total_amount) < 0.1))
+          : null;
+
+        const receiptType = selectedSaleForPrint.sale_id.includes("-TBC-") 
+          ? "PREPAID TBC SALES INVOICE" 
+          : (isCredit ? "CREDIT ACCOUNT INVOICE" : "OFFICIAL SALES INVOICE");
+
+        const displayTotalAmount = matchedCredit ? matchedCredit.total_amount : selectedSaleForPrint.total_amount;
+        const displayAmountPaid = matchedCredit ? matchedCredit.amount_paid : selectedSaleForPrint.total_amount;
+        const displayRemainingBalance = matchedCredit ? matchedCredit.remaining_balance : 0;
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto print:p-0 print:bg-white animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg p-6 animate-in zoom-in-95 duration-150 print:shadow-none print:border-none print:p-0">
+              
+              {/* Print Header controls (Hidden during print) */}
+              <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4 print:hidden">
+                <span className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                  <span className="text-emerald-500 font-bold">●</span> POS Ticket Re-printer
+                </span>
+                <button
+                  onClick={() => setSelectedSaleForPrint(null)}
+                  className="text-slate-400 hover:text-slate-600 text-xs font-bold transition px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded cursor-pointer"
+                >
+                  ✕ Close Ticket
+                </button>
+              </div>
+
+              {/* Receipt Core Document */}
+              <div id="wara-wara-reprint-ticket" className="bg-slate-50 p-5 rounded-xl border border-slate-200 font-mono text-xs text-slate-800 space-y-4 print:bg-white print:border-none print:p-0">
+                
+                {/* Store Identity */}
+                <div className="pb-1">
+                  <CompanyLetterhead darkTheme={false} centered={true} />
+                  <div className="border-b border-dashed border-slate-300 my-3"></div>
+                </div>
+
+                {/* Receipt info */}
+                <div className="grid grid-cols-2 gap-y-2 text-[11px]">
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight">TICKET TYPE</span>
+                    <p className="font-bold text-slate-900 uppercase">{receiptType} (REPRINT)</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight">INVOICE SERIAL</span>
+                    <p className="font-extrabold text-indigo-700 font-mono tracking-wider">
+                      #{selectedSaleForPrint.sale_id.slice(-8).toUpperCase()}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight">DATE & LIVE TIME</span>
+                    <p className="font-semibold text-slate-900">
+                      {formatDate(selectedSaleForPrint.timestamp)} {formatTime(selectedSaleForPrint.timestamp)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight">CUSTOMER NAME</span>
+                    <p className="font-bold text-slate-900 capitalize">
+                      {selectedSaleForPrint.customer_name || "Walk-In Customer"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight font-semibold">PAYMENT METHOD</span>
+                    <p className="font-semibold text-slate-900 uppercase">
+                      {selectedSaleForPrint.payment_method.replace("_", " ")}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight">PAYMENT REF / DATA</span>
+                    <p className="font-semibold text-slate-800 break-all font-mono">
+                      {selectedSaleForPrint.reference_details || "None (Direct Handover)"}
+                    </p>
+                  </div>
+                  {selectedSaleForPrint.physical_receipt_no && (
+                    <div>
+                      <span className="text-slate-400 font-sans block text-[10px] tracking-tight">PHYSICAL BOOK RCPT</span>
+                      <p className="font-extrabold text-emerald-700 dark:text-emerald-600 font-mono tracking-wide">
+                        {selectedSaleForPrint.physical_receipt_no}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-b border-dashed border-slate-300"></div>
+
+                {/* Line items table */}
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-12 gap-1 text-[10px] text-slate-400 font-bold uppercase pb-1 border-b border-slate-150">
+                    <span className="col-span-6">Material Description</span>
+                    <span className="col-span-2 text-center">Qty</span>
+                    <span className="col-span-2 text-right">Rate</span>
+                    <span className="col-span-2 text-right">Total</span>
+                  </div>
+                  
+                  {selectedSaleForPrint.items.map((item: any, idx: number) => (
+                    <div key={idx} className="border-b border-slate-100 last:border-0 py-1">
+                      <div className="grid grid-cols-12 gap-1 text-[11px]">
+                        <span className="col-span-6 truncate font-sans text-slate-700 font-medium">
+                          {item.name}
+                        </span>
+                        <span className="col-span-2 text-center font-bold">
+                          {item.quantity}
+                        </span>
+                        <span className="col-span-2 text-right text-slate-500 font-mono">
+                          SLe {item.unit_cost.toFixed(0)}
+                        </span>
+                        <span className="col-span-2 text-right font-black font-mono">
+                          SLe {(item.quantity * item.unit_cost).toFixed(0)}
+                        </span>
+                      </div>
+                      {selectedSaleForPrint.payment_method === "tbc" && (
+                        <div className="text-[10px] text-amber-600 font-bold tracking-tight pl-1.5 flex items-center gap-1 mt-0.5">
+                          <span>📦</span> Outstanding Stock to Collect: {item.quantity} units
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-b border-dashed border-slate-300"></div>
+
+                {/* Total Summary block */}
+                <div className="flex justify-between items-center py-1">
+                  <span className="text-[11px] font-bold uppercase text-slate-600 font-sans">
+                    Gross Total Amount
+                  </span>
+                  <span className="text-sm font-black text-slate-900 font-mono">
+                    SLe {displayTotalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                {isCredit && (
+                  <>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-[11px] font-bold uppercase text-slate-600 font-sans">
+                        Down-payment Paid Today
+                      </span>
+                      <span className="text-xs font-extrabold text-emerald-600 font-mono">
+                        SLe {displayAmountPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-[11px] font-bold uppercase text-slate-600 font-sans">
+                        Outstanding Debit Balance
+                      </span>
+                      <span className="text-xs font-extrabold text-red-500 font-mono">
+                        SLe {displayRemainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </>
+                )}
+
+                <div className="border-b border-dashed border-slate-300"></div>
+
+                {/* Mandatory Official Footer */}
+                <div className="text-[10px] text-slate-500 text-center space-y-1.5 pt-1.5 leading-relaxed font-sans">
+                  <p className="font-semibold text-slate-700">
+                    All rights reserved this software is a property of Wara Wara Construction and General Services and Watasai Stone Investment .
+                  </p>
+                  <p className="text-emerald-600 text-[9px] uppercase tracking-wider font-extrabold font-mono">
+                    Software built and managed by Andrew Tech Solutions (andrewdrive2025@gmail.com)
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2.5 mt-5 print:hidden">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSaleForPrint(null)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2.5 rounded-xl transition cursor-pointer text-center"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const receiptElement = document.getElementById("wara-wara-reprint-ticket");
+                    if (!receiptElement) return;
+
+                    // Create temporary print container
+                    const chamber = document.createElement("div");
+                    chamber.id = "thermal-print-chamber";
+                    chamber.className = receiptElement.className;
+                    chamber.innerHTML = receiptElement.innerHTML;
+                    document.body.appendChild(chamber);
+
+                    // Delay print dialog to allow browser to completely reflow and paint the new node in the DOM render tree
+                    setTimeout(() => {
+                      window.print();
+                      document.body.removeChild(chamber);
+                    }, 300);
+                  }}
+                  className="flex-1 bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-extrabold py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                >
+                  <span>🖨️</span> Reprint Official Receipt
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Root Nabieu Overrides Edit Transaction Modal */}
       {editingSale && (

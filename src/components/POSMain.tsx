@@ -893,7 +893,7 @@ export default function POSMain() {
               {/* Mandatory Official Footer */}
               <div className="text-[10px] text-slate-500 text-center space-y-1.5 pt-1.5 leading-relaxed font-sans">
                 <p className="font-semibold text-slate-700">
-                  All rights reserved this software is a property of Wara Wara Construction and General Services and Wata Sai Stone Investment .
+                  All rights reserved this software is a property of Wara Wara Construction and General Services and Watasai Stone Investment .
                 </p>
                 <p className="text-emerald-600 text-[9px] uppercase tracking-wider font-extrabold font-mono">
                   Software built and managed by Andrew Tech Solutions (andrewdrive2025@gmail.com)

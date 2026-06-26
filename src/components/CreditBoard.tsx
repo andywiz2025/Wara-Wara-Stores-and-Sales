@@ -516,7 +516,7 @@ export default function CreditBoard() {
                         </button>
                         
                         {/* Admin Action commands */}
-                        {currentUser?.username?.toLowerCase() === "nabieu" && (
+                        {(currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu") && (
                           <>
                             <button
                               onClick={() => handleOpenEditModal(c)}

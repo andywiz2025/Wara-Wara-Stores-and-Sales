@@ -204,21 +204,21 @@ export default function StaffManager() {
               onClick={async () => {
                 const conf1 = window.confirm(
                   "⚠️ WARNING: You are attempting a FULL operational data reset.\n\n" +
-                  "This will permanently delete all Sales Invoices, TBC Tickets, logged Expenditures, and Bank Deposits.\n\n" +
+                  "This will permanently delete all Sales Invoices, Credit Accounts, TBC Tickets, logged Expenditures, Bank Deposits, and Vault logs.\n\n" +
                   "🔴 ALL STORE PRODUCT STOCKS WILL BE SET TO ZERO (0) to force-activate low stock and out-of-stock alarms.\n\n" +
                   "IMPORTANT: Live update/restocking to stores MUST be performed before normal transaction operations can continue.\n\n" +
                   "Are you sure you want to proceed?"
                 );
                 if (!conf1) return;
                 const conf2 = window.confirm(
-                  "🔴 CRITICAL CONFIRMATION: This action is irreversible! All operational history will be cleared and product counts will drop to zero.\n\n" +
+                  "🔴 CRITICAL CONFIRMATION: This action is irreversible! All operational history, credits, TBCs, expenditures, bank deposits, and vault logs will be cleared and product counts will drop to zero.\n\n" +
                   "Are you absolutely 100% sure you want to proceed and require manual restocking?"
                 );
                 if (!conf2) return;
                 
                 try {
                   await adminResetAllData();
-                  setSuccessText("All operational data successfully wiped. Product stocks have been set to exactly 0 units. Please restock items in the Store Catalog before initiating new transaction operations!");
+                  setSuccessText("All operational data, credits, TBCs, expenditures, bank deposits, and vault logs successfully wiped. Product stocks have been set to exactly 0 units. Please restock items in the Store Catalog before initiating new transaction operations!");
                 } catch (err: any) {
                   setErrorText(err.message || "Failed to execute database wipe.");
                 }

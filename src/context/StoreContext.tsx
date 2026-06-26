@@ -2406,7 +2406,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       throw new Error("Only Nabieu's root account is authorized to perform database resets.");
     }
 
-    const resetProducts = SEED_PRODUCTS.map((p) => ({
+    const currentProducts = products.length > 0 ? products : SEED_PRODUCTS;
+    const resetProducts = currentProducts.map((p) => ({
       ...p,
       stock: 0
     }));
@@ -2415,6 +2416,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setTbcs([]);
     setExpenditures([]);
     setBankDeposits([]);
+    setCredits([]);
     setNotifications([]);
     setProducts(resetProducts);
 
@@ -2422,51 +2424,97 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     saveSandboxState("wws_tbcs", []);
     saveSandboxState("wws_expenditures", []);
     saveSandboxState("wws_bank_deposits", []);
+    saveSandboxState("wws_credits", []);
     saveSandboxState("wws_alerts", []);
     saveSandboxState("wws_products", resetProducts);
 
     triggerNotification(
-      "DATABASE OPERATIONAL RESET COMPLETE! All store stocks are set to exactly 0 (prices preserved). Active Stock Shortage Alarms are now triggered. RESTOCKING IS MANDATORY before processing any transactions.",
+      "DATABASE OPERATIONAL RESET COMPLETE! All store stocks, sales, credits, TBCs, expenditures, bank deposits, and vault logs are set to exactly 0 (prices preserved). Active Stock Shortage Alarms are now triggered. RESTOCKING IS MANDATORY.",
       "warning"
     );
 
     if (!isDemoMode && firebaseActive && isOnline) {
       try {
-        for (const s of sales) {
-          try {
-            await deleteDoc(doc(db, "sales_ledger", s.sale_id));
-          } catch (e) {
-            console.error("Failed to delete sale", s.sale_id, e);
+        const deletePromises: Promise<any>[] = [];
+
+        // 1. Delete Sales
+        sales.forEach((s) => {
+          if (s.sale_id) {
+            deletePromises.push(
+              deleteDoc(doc(db, "sales_ledger", s.sale_id)).catch((e) =>
+                console.error("Failed to delete sale", s.sale_id, e)
+              )
+            );
           }
-        }
-        for (const t of tbcs) {
-          try {
-            await deleteDoc(doc(db, "tbc_registry", t.tbc_id));
-          } catch (e) {
-            console.error("Failed to delete tbc", t.tbc_id, e);
+        });
+
+        // 2. Delete TBC Tickets
+        tbcs.forEach((t) => {
+          if (t.tbc_id) {
+            deletePromises.push(
+              deleteDoc(doc(db, "tbc_registry", t.tbc_id)).catch((e) =>
+                console.error("Failed to delete tbc", t.tbc_id, e)
+              )
+            );
           }
-        }
-        for (const e of expenditures) {
-          try {
-            await deleteDoc(doc(db, "expenditures", e.id));
-          } catch (err) {
-            console.error("Failed to delete expenditure", e.id, err);
+        });
+
+        // 3. Delete Expenditures
+        expenditures.forEach((e) => {
+          if (e.id) {
+            deletePromises.push(
+              deleteDoc(doc(db, "expenditures", e.id)).catch((err) =>
+                console.error("Failed to delete expenditure", e.id, err)
+              )
+            );
           }
-        }
-        for (const d of bankDeposits) {
-          try {
-            await deleteDoc(doc(db, "bank_deposits", d.id));
-          } catch (err) {
-            console.error("Failed to delete deposit", d.id, err);
+        });
+
+        // 4. Delete Bank Deposits
+        bankDeposits.forEach((d) => {
+          if (d.id) {
+            deletePromises.push(
+              deleteDoc(doc(db, "bank_deposits", d.id)).catch((err) =>
+                console.error("Failed to delete deposit", d.id, err)
+              )
+            );
           }
-        }
-        for (const p of resetProducts) {
-          try {
-            await setDoc(doc(db, "products", p.id), p);
-          } catch (err) {
-            console.error("Failed to reseed product", p.id, err);
+        });
+
+        // 5. Delete Credit Accounts
+        credits.forEach((c) => {
+          if (c.credit_id) {
+            deletePromises.push(
+              deleteDoc(doc(db, "credits_registry", c.credit_id)).catch((err) =>
+                console.error("Failed to delete credit registry", c.credit_id, err)
+              )
+            );
           }
-        }
+        });
+
+        // 6. Delete Notifications (Active Low Stock & Credit Alarms)
+        notifications.forEach((n) => {
+          const docId = n.id || (n as any).alert_id;
+          if (docId) {
+            deletePromises.push(
+              deleteDoc(doc(db, "notifications", docId)).catch((err) =>
+                console.error("Failed to delete notification", docId, err)
+              )
+            );
+          }
+        });
+
+        // Execute all deletions in parallel
+        await Promise.all(deletePromises);
+
+        // 7. Reset all product stocks to 0 in Firestore
+        const productPromises = resetProducts.map((p) =>
+          setDoc(doc(db, "products", p.id), p).catch((err) =>
+            console.error("Failed to reseed product", p.id, err)
+          )
+        );
+        await Promise.all(productPromises);
+
       } catch (err) {
         console.error("Error resetting online database maps:", err);
       }
@@ -2474,8 +2522,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const adminDeleteSale = async (saleId: string) => {
-    if (currentUser?.username?.toLowerCase() !== "nabieu") {
-      throw new Error("Only Nabieu's root account is authorized to modify or delete completed sale invoices.");
+    const isUserAdmin = currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu";
+    if (!isUserAdmin) {
+      throw new Error("Only authorized administrators are permitted to delete completed sale invoices.");
     }
 
     const updated = sales.filter((s) => s.sale_id !== saleId);
@@ -2493,8 +2542,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const adminEditSale = async (saleId: string, updatedFields: Partial<Sale>) => {
-    if (currentUser?.username?.toLowerCase() !== "nabieu") {
-      throw new Error("Only Nabieu's root account is authorized to edit completed sale invoices.");
+    const isUserAdmin = currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu";
+    if (!isUserAdmin) {
+      throw new Error("Only authorized administrators are permitted to edit completed sale invoices.");
     }
 
     const updated = sales.map((s) => {
@@ -2517,8 +2567,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const adminDeleteTbc = async (tbcId: string) => {
-    if (currentUser?.username?.toLowerCase() !== "nabieu") {
-      throw new Error("Only Nabieu's root account is authorized to modify or delete TBC tickets.");
+    const isUserAdmin = currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu";
+    if (!isUserAdmin) {
+      throw new Error("Only authorized administrators are permitted to delete TBC tickets.");
     }
 
     const updated = tbcs.filter((t) => t.tbc_id !== tbcId);
@@ -2536,8 +2587,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const adminEditTbc = async (tbcId: string, updatedFields: Partial<TBCRegistry>) => {
-    if (currentUser?.username?.toLowerCase() !== "nabieu") {
-      throw new Error("Only Nabieu's root account is authorized to edit TBC tickets.");
+    const isUserAdmin = currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu";
+    if (!isUserAdmin) {
+      throw new Error("Only authorized administrators are permitted to edit TBC tickets.");
     }
 
     const updated = tbcs.map((t) => {
@@ -2560,8 +2612,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const adminDeleteCredit = async (creditId: string) => {
-    if (currentUser?.username?.toLowerCase() !== "nabieu") {
-      throw new Error("Only Nabieu's root account is authorized to modify or delete Credit accounts.");
+    const isUserAdmin = currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu";
+    if (!isUserAdmin) {
+      throw new Error("Only authorized administrators are permitted to delete Credit accounts.");
     }
 
     const updated = credits.filter((c) => c.credit_id !== creditId);
@@ -2579,8 +2632,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const adminEditCredit = async (creditId: string, updatedFields: Partial<CreditRegistry>) => {
-    if (currentUser?.username?.toLowerCase() !== "nabieu") {
-      throw new Error("Only Nabieu's root account is authorized to edit Credit accounts.");
+    const isUserAdmin = currentUser?.role === "admin" || currentUser?.username?.toLowerCase() === "nabieu";
+    if (!isUserAdmin) {
+      throw new Error("Only authorized administrators are permitted to edit Credit accounts.");
     }
 
     const updated = credits.map((c) => {

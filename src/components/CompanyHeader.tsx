@@ -161,4 +161,4 @@ export function CompanyLetterhead({ darkTheme = false, centered = true }: { dark
  * The standard consistent software branding footer text requested by the user.
  */
 export const COMPANY_SOFTWARE_FOOTER = 
-  "All rights reserved this software is a property of Wara Wara Construction and General Services and Wata Sai Stone Investment . Software built and managed by Andrew Tech Solutions andrewdrive2025@gmail.com";
+  "All rights reserved this software is a property of Wara Wara Construction and General Services and Watasai Stone Investment . Software built and managed by Andrew Tech Solutions andrewdrive2025@gmail.com";
