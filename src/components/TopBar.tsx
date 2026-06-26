@@ -14,7 +14,8 @@ import {
   LayoutDashboard,
   RefreshCw,
   CloudLightning,
-  Trash2
+  Trash2,
+  FileText
 } from "lucide-react";
 
 export default function TopBar() {
@@ -138,6 +139,17 @@ export default function TopBar() {
             <Clock className="h-3 w-3 text-slate-400" />
             <span>{time}</span>
           </div>
+
+          {/* Management Report DOCX Download Link */}
+          <a
+            href="/Wara_Wara_Construction_POS_Management_Report.docx"
+            download="Wara_Wara_Construction_POS_Management_Report.docx"
+            className="bg-amber-600/20 hover:bg-amber-600/35 border border-amber-600/30 text-amber-400 hover:text-amber-300 px-2.5 py-0.5 rounded flex items-center gap-1.5 transition text-[11px] font-medium cursor-pointer"
+            title="Download Professional System Overview Report for Management (DOCX)"
+          >
+            <FileText className="h-3 w-3" />
+            <span>Management Report</span>
+          </a>
         </div>
 
         {/* Compact Status indicators on Mobile to save valuable space */}

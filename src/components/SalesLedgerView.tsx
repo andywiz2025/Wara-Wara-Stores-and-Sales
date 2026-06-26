@@ -199,219 +199,330 @@ export default function SalesLedgerView() {
           <head>
             <title>Operation Store Report - Wara Wara Construction</title>
             <style>
-              body { font-family: system-ui, -apple-system, sans-serif; padding: 35px; color: #0f172a; line-height: 1.5; }
-              header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 12px; }
-              h1 { margin: 0; font-size: 19px; text-transform: uppercase; color: #0f172a; font-weight: 855; }
-              h2 { font-size: 12px; margin: 5px 0 0 0; color: #475569; letter-spacing: 0.5px; text-transform: uppercase; font-weight: bold; }
-              .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 12px; }
-              .meta-table td { padding: 8px 12px; border: 1px solid #cbd5e1; }
-              .meta-table td.label { font-weight: bold; background: #f8fafc; color: #475569; width: 25%; }
-              .section-heading { font-size: 13px; font-weight: bold; text-transform: uppercase; color: #1e3a8a; border-left: 4px solid #1e3a8a; padding-left: 8px; margin: 22px 0 10px; }
-              .data-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 25px; }
-              .data-table th { background: #f1f5f9; padding: 8px 10px; border: 1px solid #cbd5e1; text-align: left; font-weight: bold; color: #334155; }
-              .data-table td { padding: 7px 10px; border: 1px solid #e2e8f0; }
-              .footer { margin-top: 55px; border-top: 2px dashed #cbd5e1; padding-top: 15px; text-align: center; font-size: 10px; color: #64748b; line-height: 1.6; }
-              .total-highlight { font-size: 14px; font-weight: 900; color: #0f172a; font-family: monospace; }
+              @media print {
+                @page { size: auto; margin: 0mm !important; }
+                body { margin: 0 !important; padding: 0 !important; width: 58mm !important; max-width: 58mm !important; }
+              }
+              body {
+                font-family: monospace, Courier, "Courier New" !important;
+                padding: 2mm 2mm 10mm 2mm !important; /* Bottom padding ensures cut clearance on auto-cutter receipt printers */
+                color: #000000 !important;
+                background-color: #ffffff !important;
+                width: 58mm !important;
+                max-width: 58mm !important;
+                box-sizing: border-box !important;
+                font-size: 9px !important;
+                line-height: 1.25 !important;
+                float: left !important;
+                text-align: left !important;
+                text-transform: uppercase !important;
+              }
+              header {
+                text-align: center;
+                margin-bottom: 6px;
+                border-bottom: 1.5px dashed #000000;
+                padding-bottom: 6px;
+              }
+              header h1 {
+                margin: 0;
+                font-size: 13px !important;
+                color: #000000;
+                font-weight: 950 !important;
+                text-shadow: 0.3px 0px 0px #000000, -0.3px 0px 0px #000000, 0px 0.3px 0px #000000 !important;
+              }
+              header p {
+                font-size: 8px !important;
+                line-height: 1.2 !important;
+                margin: 2px 0;
+                font-weight: 750 !important;
+              }
+              .divider {
+                border-bottom: 1.2px dashed #000000 !important;
+                margin: 4px 0 !important;
+                width: 100% !important;
+                display: block !important;
+              }
+              .divider-thick {
+                border-bottom: 2.2px dashed #000000 !important;
+                margin: 5px 0 !important;
+                width: 100% !important;
+                display: block !important;
+              }
+              .meta-card {
+                background: #ffffff;
+                width: 100%;
+                margin-bottom: 6px;
+              }
+              .meta-row {
+                display: flex;
+                justify-content: space-between;
+                margin: 2.5px 0;
+                font-size: 9px !important;
+              }
+              .meta-label {
+                font-weight: 800 !important;
+                text-align: left;
+              }
+              .meta-value {
+                font-weight: 950 !important;
+                text-align: right;
+                text-shadow: 0.2px 0px 0px #000000 !important;
+              }
+              .meta-value-highlight {
+                font-weight: 950 !important;
+                text-align: right;
+                text-shadow: 0.3px 0px 0px #000000, -0.3px 0px 0px #000000 !important;
+              }
+              .section-heading {
+                font-size: 10px !important;
+                font-weight: 950 !important;
+                text-align: left;
+                margin: 8px 0 3px 0;
+                padding: 1px 0;
+                border-bottom: 1px solid #000000;
+                text-shadow: 0.3px 0px 0px #000000, -0.3px 0px 0px #000000 !important;
+              }
+              .item-row {
+                padding: 3.5px 0;
+                border-bottom: 0.8px dashed #cccccc;
+              }
+              .item-row:last-child {
+                border-bottom: none;
+              }
+              .item-header {
+                display: flex;
+                justify-content: space-between;
+                font-weight: bold;
+              }
+              .item-details {
+                display: flex;
+                justify-content: space-between;
+                font-size: 8px !important;
+                color: #333333;
+                padding-left: 2px;
+                margin-top: 1px;
+                text-transform: uppercase;
+              }
+              .footer {
+                margin-top: 15px;
+                border-top: 1.5px dashed #000000;
+                padding-top: 6px;
+                text-align: center;
+                font-size: 7.5px !important;
+                color: #333333;
+                line-height: 1.3;
+              }
+              /* Signature Line layout */
+              .signature-block {
+                margin-top: 15px;
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+              }
+              .sig-line {
+                width: 48%;
+                text-align: center;
+                font-size: 8px;
+              }
+              .sig-line-border {
+                border-bottom: 1px solid #000000;
+                height: 12px;
+                margin-bottom: 2px;
+              }
+              svg * {
+                fill: #000000 !important;
+              }
+              svg line, svg polygon, svg rect, svg path, svg circle {
+                fill: #000000 !important;
+                stroke: #000000 !important;
+              }
+              svg text {
+                fill: #000000 !important;
+              }
             </style>
           </head>
           <body>
-            <header style="border-bottom: 2px solid #0f172a; padding-bottom: 18px; text-align: center; margin-bottom: 25px;">
-              <!-- Official Company Logo in Printable Report Header -->
-              <svg viewBox="0 0 1000 240" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-height: 100px; width: 100%; max-width: 600px; display: block; margin: 0 auto 10px auto;">
-                <polygon points="260,110 390,30 500,90 590,40 700,110" fill="#15803d" opacity="0.85" />
-                <polygon points="340,110 440,50 540,110" fill="#166534" />
-                <polygon points="460,110 560,35 660,110" fill="#14532d" opacity="0.9" />
-                <polygon points="390,30 375,45 400,48" fill="#a7f3d0" />
-                <polygon points="590,40 575,55 600,58" fill="#a7f3d0" />
-                <polygon points="560,35 545,48 570,52" fill="#86efac" />
+            <header>
+              <!-- Official Company Logo scaled beautifully to tight width -->
+              <svg viewBox="0 0 1000 240" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-height: 55px; width: 85%; display: block; margin: 0 auto 4px auto;">
+                <polygon points="260,110 390,30 500,90 590,40 700,110" fill="#000000" />
+                <polygon points="340,110 440,50 540,110" fill="#000000" />
+                <polygon points="460,110 560,35 660,110" fill="#000000" />
+                <polygon points="390,30 375,45 400,48" fill="#000000" />
+                <polygon points="590,40 575,55 600,58" fill="#000000" />
+                <polygon points="560,35 545,48 570,52" fill="#000000" />
                 <g transform="translate(40, -10)">
-                  <rect x="110" y="100" width="100" height="15" rx="7" fill="#1e293b" />
+                  <rect x="110" y="100" width="100" height="15" rx="7" fill="#000000" />
                   <line x1="120" y1="108" x2="200" y2="108" stroke="#ffffff" stroke-width="2" stroke-dasharray="4 3" />
-                  <path d="M125,75 L165,75 L175,100 L120,100 Z" fill="#ea580c" />
-                  <path d="M135,55 L155,55 L165,75 L130,75 Z" fill="#1e293b" />
-                  <rect x="138" y="59" width="12" height="11" fill="#bae6fd" />
-                  <path d="M165,80 L210,35 L200,30 L160,75 Z" fill="#ea580c" />
-                  <path d="M205,33 L230,65 L245,60 L210,25 Z" fill="#ea580c" />
-                  <path d="M230,65 C230,75 210,88 195,80 C190,75 195,68 210,68 C215,68 225,62 230,65 Z" fill="#1e293b" />
-                  <circle cx="150" cy="108" r="5" fill="#475569" />
-                  <circle cx="175" cy="108" r="5" fill="#475569" />
+                  <path d="M125,75 L165,75 L175,100 L120,100 Z" fill="#000000" />
+                  <path d="M135,55 L155,55 L165,75 L130,75 Z" fill="#000000" />
+                  <rect x="138" y="59" width="12" height="11" fill="#ffffff" />
+                  <path d="M165,80 L210,35 L200,30 L160,75 Z" fill="#000000" />
+                  <path d="M205,33 L230,65 L245,60 L210,25 Z" fill="#000000" />
+                  <path d="M230,65 C230,75 210,88 195,80 C190,75 195,68 210,68 C215,68 225,62 230,65 Z" fill="#000000" />
+                  <circle cx="150" cy="108" r="5" fill="#000000" />
+                  <circle cx="175" cy="108" r="5" fill="#000000" />
                 </g>
                 <g transform="translate(560, -5)">
-                  <rect x="50" y="55" width="40" height="60" fill="#475569" />
-                  <rect x="95" y="30" width="50" height="85" fill="#334155" />
-                  <rect x="150" y="45" width="45" height="70" fill="#1e293b" />
-                  <rect x="200" y="65" width="35" height="50" fill="#475569" />
-                  <rect x="105" y="40" width="8" height="10" fill="#cbd5e1" />
-                  <rect x="120" y="40" width="8" height="10" fill="#cbd5e1" />
-                  <rect x="135" y="40" width="8" height="10" fill="#cbd5e1" />
-                  <rect x="105" y="60" width="8" height="10" fill="#cbd5e1" />
-                  <rect x="120" y="60" width="8" height="10" fill="#cbd5e1" />
-                  <rect x="135" y="60" width="8" height="10" fill="#cbd5e1" />
-                  <rect x="105" y="80" width="8" height="10" fill="#cbd5e1" />
-                  <circle cx="150" cy="108" r="5" fill="#475569" />
-                  <line x1="185" y1="115" x2="185" y2="10" stroke="#0f172a" stroke-width="4" />
-                  <line x1="100" y1="20" x2="250" y2="20" stroke="#0f172a" stroke-width="3" />
-                  <line x1="250" y1="20" x2="185" y2="10" stroke="#ea580c" stroke-width="1.5" />
-                  <line x1="100" y1="20" x2="185" y2="10" stroke="#ea580c" stroke-width="1.5" />
-                  <line x1="185" y1="10" x2="185" y2="20" stroke="#ea580c" stroke-width="3" />
-                  <line x1="230" y1="20" x2="230" y2="55" stroke="#334155" stroke-width="1.5" />
-                  <path d="M227,55 C227,59 233,59 233,55" stroke="#1e293b" stroke-width="2" fill="none" />
-                  <rect x="120" y="15" width="20" height="10" fill="#ea580c" />
+                  <rect x="50" y="55" width="40" height="60" fill="#000000" />
+                  <rect x="95" y="30" width="50" height="85" fill="#000000" />
+                  <rect x="150" y="45" width="45" height="70" fill="#000000" />
+                  <rect x="200" y="65" width="35" height="50" fill="#000000" />
+                  <rect x="105" y="40" width="8" height="10" fill="#ffffff" />
+                  <rect x="120" y="40" width="8" height="10" fill="#ffffff" />
+                  <rect x="135" y="40" width="8" height="10" fill="#ffffff" />
+                  <rect x="105" y="60" width="8" height="10" fill="#ffffff" />
+                  <rect x="120" y="60" width="8" height="10" fill="#ffffff" />
+                  <rect x="135" y="60" width="8" height="10" fill="#ffffff" />
+                  <rect x="105" y="80" width="8" height="10" fill="#ffffff" />
+                  <circle cx="150" cy="108" r="5" fill="#000000" />
+                  <line x1="185" y1="115" x2="185" y2="10" stroke="#000000" stroke-width="4" />
+                  <line x1="100" y1="20" x2="250" y2="20" stroke="#000000" stroke-width="3" />
+                  <line x1="250" y1="20" x2="185" y2="10" stroke="#000000" stroke-width="1.5" />
+                  <line x1="100" y1="20" x2="185" y2="10" stroke="#000000" stroke-width="1.5" />
+                  <line x1="185" y1="10" x2="185" y2="20" stroke="#000000" stroke-width="3" />
+                  <line x1="230" y1="20" x2="230" y2="55" stroke="#000000" stroke-width="1.5" />
+                  <path d="M227,55 C227,59 233,59 233,55" stroke="#000000" stroke-width="2" fill="none" />
+                  <rect x="120" y="15" width="20" height="10" fill="#000000" />
                 </g>
-                <path d="M10,114 L990,114" stroke="#0f172a" stroke-width="5" stroke-linecap="round" />
-                <path d="M40,117 L960,117" stroke="#ea580c" stroke-width="3" stroke-linecap="round" />
-                <text x="500" y="178" text-anchor="middle" fill="#0c1d3a" font-size="72" font-weight="900" font-style="oblique" font-family="system-ui, -apple-system, sans-serif" letter-spacing="4">WARA WARA</text>
-                <text x="500" y="218" text-anchor="middle" fill="#ea580c" font-size="24" font-weight="800" font-family="system-ui, -apple-system, sans-serif" letter-spacing="6">CONSTRUCTION & SERVICES</text>
+                <path d="M10,114 L990,114" stroke="#000000" stroke-width="5" stroke-linecap="round" />
+                <path d="M40,117 L960,117" stroke="#000000" stroke-width="3" stroke-linecap="round" />
+                <text x="500" y="178" text-anchor="middle" fill="#000000" font-size="72" font-weight="900" font-style="oblique" font-family="monospace" letter-spacing="4">WARA WARA</text>
+                <text x="500" y="218" text-anchor="middle" fill="#000000" font-size="24" font-weight="800" font-family="monospace" letter-spacing="6">CONSTRUCTION & SERVICES</text>
               </svg>
-              <h2 style="font-size: 13.5px; margin: 4px 0 6px 0; color: #1d4ed8; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 800;">
-                Construction & Supply of Building Material & Electricals
-              </h2>
-              <p style="font-size: 11.5px; font-weight: 700; color: #334155; margin: 0 0 4px 0;">
-                8 Shekie Bockarie Street - Kabala, Koinadugu, Sierra Leone
+              <h1 style="font-size: 11px !important; margin: 2px 0 1px 0;">FINANCIAL REPORT AUDIT</h1>
+              <p style="font-size: 7.5px !important; font-weight: 700; color: #000000; margin: 0;">
+                8 SHEKIE BOCKARIE STREET • KABALA, KOINADUGU, SIERRA LEONE
               </p>
-              <p style="font-size: 11px; font-weight: bold; color: #475569; margin: 0 0 4px 0;">
-                Mobile: 076-667575 / 077-263939 • Email: wararaconstructionkoinadugu@gmail.com
-              </p>
-              <p style="font-size: 10px; font-style: italic; color: #64748b; margin: 0; font-family: system-ui;">
-                Joint-Venture partner of Watasai Stone Investment • Official Store Sales Report & Financial Ledger Audit
+              <p style="font-size: 7px !important; color: #333333; margin: 0;">
+                TEL: 076-667575 / 077-263939 • EMAIL: WARARACONSTRUCTIONKOINADUGU@GMAIL.COM
               </p>
             </header>
 
-            <table class="meta-table">
-              <tr>
-                <td class="label">REPORT PERIOD:</td>
-                <td><strong>${formattedPeriod}</strong></td>
-                <td class="label">GENERATION DATE:</td>
-                <td>${new Date().toLocaleString("en-GB")}</td>
-              </tr>
-              <tr>
-                <td class="label">TOTAL SALES ISSUED:</td>
-                <td><strong>${totalTransactions} transactions</strong></td>
-                <td class="label">GROSS TURNOVER:</td>
-                <td class="total-highlight">SLe ${grossRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-              </tr>
-              <tr>
-                <td class="label">TOTAL EXPENDITURES:</td>
-                <td class="total-highlight" style="color: #dc2626;">SLe ${grossExpenditures.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="label">NET OPERATING BALANCE:</td>
-                <td class="total-highlight" style="color: #16a34a; font-size: 14px;"><strong>SLe ${netBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong></td>
-              </tr>
-              <tr>
-                <td class="label">BANKED DEPOSITS:</td>
-                <td class="total-highlight" style="color: #2563eb;">SLe ${periodDeposits?.reduce((sum, d) => sum + d.amount, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td class="label">PRINTED BY:</td>
-                <td><strong>${currentUser?.name || "System Ledger"}</strong></td>
-              </tr>
-            </table>
+            <div class="meta-card">
+              <div class="meta-row" style="border-bottom: 1px dotted #000; padding-bottom: 2px; margin-bottom: 4px;">
+                <span class="meta-label">PERIOD:</span>
+                <span class="meta-value-highlight">${formattedPeriod}</span>
+              </div>
+              <div class="meta-row">
+                <span>DATE RUN:</span>
+                <span class="meta-value">${new Date().toLocaleString("en-GB")}</span>
+              </div>
+              <div class="meta-row">
+                <span>COMPILED BY:</span>
+                <span class="meta-value">${currentUser?.name || "SYSTEM LEDGER"}</span>
+              </div>
+              <div class="divider"></div>
+              <div class="meta-row">
+                <span>SALES ISSUED:</span>
+                <span class="meta-value">${totalTransactions} TXNS</span>
+              </div>
+              <div class="meta-row">
+                <span>GROSS REVENUE:</span>
+                <span class="meta-value-highlight">SLE ${grossRevenue.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+              <div class="meta-row">
+                <span>EXPENDITURES:</span>
+                <span class="meta-value-highlight">SLE ${grossExpenditures.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+              <div class="meta-row">
+                <span>BANKED DEPOSITS:</span>
+                <span class="meta-value-highlight">SLE ${(periodDeposits?.reduce((sum, d) => sum + d.amount, 0) || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+              <div class="divider"></div>
+              <div class="meta-row" style="font-size: 10px !important; border: 1.2px solid #000; padding: 4.5px; margin-top: 4px; display: flex; justify-content: space-between; font-weight: 950; text-shadow: 0.3px 0px 0px #000000;">
+                <span>NET OPERATING BAL:</span>
+                <span>SLE ${netBalance.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+            </div>
 
-            <div class="section-heading">collected funds break-down by instrument type</div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Collected Account Block</th>
-                  <th style="text-align: right; width: 35%;">Value volume</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>💵 CASH SALES</td>
-                  <td style="text-align: right; font-weight: bold; font-family: monospace; font-size: 12px;">SLe ${cashTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                </tr>
-                <tr>
-                  <td>🏦 BANK CHEQUES</td>
-                  <td style="text-align: right; font-weight: bold; font-family: monospace; font-size: 12px;">SLe ${chequeTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                </tr>
-                <tr>
-                  <td>📱 MOBILE PORTAL TRANSFERS (MoMo)</td>
-                  <td style="text-align: right; font-weight: bold; font-family: monospace; font-size: 12px;">SLe ${momoTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="section-heading">REVENUE BREAKDOWN</div>
+            <div class="meta-card">
+              <div class="meta-row">
+                <span>💵 CASH VOLUME:</span>
+                <span class="meta-value">SLE ${cashTotal.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+              <div class="meta-row">
+                <span>🏦 BANK CHEQUES:</span>
+                <span class="meta-value">SLE ${chequeTotal.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+              <div class="meta-row">
+                <span>📱 MOBILE MONEY (ORANGE/AFRIMONEY):</span>
+                <span class="meta-value">SLE ${momoTotal.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+              </div>
+            </div>
 
-            <div class="section-heading">Expenditures Recorded (Deductions from sales)</div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Expenditure Reference</th>
-                  <th>Category</th>
-                  <th>Description / Reason</th>
-                  <th>Recorded By</th>
-                  <th style="text-align: right; width: 25%;">Amount Spent</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${periodExpenditures.length === 0 ? `
-                  <tr>
-                    <td colspan="5" style="text-align: center; color: #64748b; font-style: italic;">No expenditures registered for this timeline.</td>
-                  </tr>
-                ` : periodExpenditures.map(e => `
-                  <tr>
-                    <td><strong>${e.id}</strong></td>
-                    <td style="text-transform: capitalize;">${e.category}</td>
-                    <td>${e.description}</td>
-                    <td>${e.recorded_by}</td>
-                    <td style="text-align: right; font-family: monospace; font-weight: bold; color: #dc2626;">SLe ${e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
+            <div class="section-heading">EXPENDITURES DEDUCTIONS</div>
+            <div style="width: 100%;">
+              ${periodExpenditures.length === 0 ? `
+                <div style="text-align: center; color: #555555; padding: 6px 0; font-style: italic; font-size: 8px;">NO EXPENDITURES RECORDED.</div>
+              ` : periodExpenditures.map(e => `
+                <div class="item-row">
+                  <div class="item-header">
+                    <span><strong>${e.id.slice(-6).toUpperCase()}</strong> [${e.category}]</span>
+                    <span style="font-weight: 950; text-shadow: 0.2px 0px 0px #000000;">-SLE ${e.amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+                  </div>
+                  <div class="item-details">
+                    <span>${e.description}</span>
+                    <span>BY ${e.recorded_by}</span>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
 
-            <div class="section-heading">Detailed Material SKU Consumption Statistics</div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Material SKU Name</th>
-                  <th style="text-align: center; width: 25%;">Quantity Dispatched</th>
-                  <th style="text-align: right; width: 30%;">Turnover Weight</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.keys(itemsMap).length === 0 ? `
-                  <tr>
-                    <td colspan="3" style="text-align: center; color: #64748b; font-style: italic;">No active material throughput listed for this specific timeline.</td>
-                  </tr>
-                ` : Object.keys(itemsMap).map(name => `
-                  <tr>
-                    <td><strong>${name}</strong></td>
-                    <td style="text-align: center; font-weight: bold; font-size: 12px;">${itemsMap[name].qty}</td>
-                    <td style="text-align: right; font-family: monospace; font-size: 12px;">SLe ${itemsMap[name].revenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
+            <div class="section-heading">MATERIAL SKU CONSUMPTION</div>
+            <div style="width: 100%;">
+              ${Object.keys(itemsMap).length === 0 ? `
+                <div style="text-align: center; color: #555555; padding: 6px 0; font-style: italic; font-size: 8px;">NO MATERIAL THROUGHPUT RECORDED.</div>
+              ` : Object.keys(itemsMap).map(name => `
+                <div class="item-row">
+                  <div class="item-header">
+                    <span><strong>${name}</strong></span>
+                    <span style="font-weight: 950; text-shadow: 0.2px 0px 0px #000000;">SLE ${itemsMap[name].revenue.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+                  </div>
+                  <div class="item-details">
+                    <span>DISPATCHED: ${itemsMap[name].qty} UNITS</span>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
 
-            <div class="section-heading">Master Chronology Audit Trail / Ledger Journals</div>
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Invoice Serial</th>
-                  <th>Recording Date & Time</th>
-                  <th>Customer Client Reference</th>
-                  <th>Clearing Operator</th>
-                  <th style="text-align: right;">Total Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${periodSales.length === 0 ? `
-                  <tr>
-                    <td colspan="5" style="text-align: center; color: #64748b; font-style: italic;">No ledger rows found match selection search constraints.</td>
-                  </tr>
-                ` : periodSales.map(s => `
-                  <tr>
-                    <td style="font-family: monospace; font-weight: bold; color: #1e3a8a;">#${s.sale_id.slice(-8).toUpperCase()}</td>
-                    <td>${formatDate(s.timestamp)} ${formatTime(s.timestamp)}</td>
-                    <td style="text-transform: capitalize;">${s.customer_name || "Walk-In Customer"}</td>
-                    <td>${s.staff_id}</td>
-                    <td style="text-align: right; font-family: monospace; font-weight: bold;">SLe ${s.total_amount.toFixed(0)}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
+            <div class="section-heading">LEDGER JOURNALS CHRONOLOGY</div>
+            <div style="width: 100%;">
+              ${periodSales.length === 0 ? `
+                <div style="text-align: center; color: #555555; padding: 6px 0; font-style: italic; font-size: 8px;">NO LEDGER PATHS LOGGED.</div>
+              ` : periodSales.map(s => `
+                <div class="item-row">
+                  <div class="item-header">
+                    <span><strong>#${s.sale_id.slice(-8).toUpperCase()}</strong> [${s.staff_id}]</span>
+                    <span style="font-weight: 950; text-shadow: 0.2px 0px 0px #000000;">SLE ${s.total_amount.toLocaleString(undefined, { minimumFractionDigits: 0 })}</span>
+                  </div>
+                  <div class="item-details">
+                    <span>${formatDate(s.timestamp)} ${formatTime(s.timestamp)}</span>
+                    <span>${(s.customer_name || "WALK-IN")}</span>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+
+            <div class="divider-thick"></div>
+
+            <div class="signature-block">
+              <div class="sig-line">
+                <div class="sig-line-border"></div>
+                <span>AUDITED BY</span>
+              </div>
+              <div class="sig-line">
+                <div class="sig-line-border"></div>
+                <span>APPROVED BY</span>
+              </div>
+            </div>
 
             <div class="footer">
-              <p>All rights reserved this software is a property of Wara Wara Construction and General Services and Wata Sai Stone Investment .</p>
-              <p style="font-weight: bold; font-size: 11px;">Software built and managed by Andrew Tech Solutions (andrewdrive2025@gmail.com)</p>
+              <p>SOFTWARE BY ANDREW TECH SOLUTIONS<br/>EMAIL: ANDREWDRIVE2025@GMAIL.COM</p>
+              <p style="font-weight: bold; margin-top: 4px;">OFFICIAL RECORD OF WARA WARA CONSTRUCTION & GENERAL SERVICES • SIERRA LEONE</p>
             </div>
+            
             <script>
               window.onload = function() {
                 window.print();
@@ -732,6 +843,11 @@ export default function SalesLedgerView() {
                       {s.reference_details && (
                         <span className="text-[10px] text-slate-400 font-mono italic">
                           ({s.reference_details})
+                        </span>
+                      )}
+                      {s.physical_receipt_no && (
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5" title="Physical Book Receipt Number Cross-Reference">
+                          📖 Book Ref: {s.physical_receipt_no}
                         </span>
                       )}
                     </div>
@@ -1167,6 +1283,9 @@ export default function SalesLedgerView() {
                 <p className="text-slate-705">Method: <strong className="text-slate-800 uppercase">{activeSale.payment_method}</strong></p>
                 {activeSale.reference_details && (
                   <p className="text-slate-705">Ref Details: <strong className="text-slate-800">{activeSale.reference_details}</strong></p>
+                )}
+                {activeSale.physical_receipt_no && (
+                  <p className="text-slate-705">Physical Book No: <strong className="text-emerald-700 font-bold">{activeSale.physical_receipt_no}</strong></p>
                 )}
               </div>
 

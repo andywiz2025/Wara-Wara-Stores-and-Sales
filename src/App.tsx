@@ -10,10 +10,10 @@ import SalesLedgerView from "./components/SalesLedgerView";
 import StaffManager from "./components/StaffManager";
 import LoginScreen from "./components/LoginScreen";
 import workflowsDiagram from "./assets/images/wara_wara_workflows_1780084713169.png";
-import posCheckoutImg from "./assets/images/pos_checkout_1780085780866.png";
-import tbcDispatchImg from "./assets/images/tbc_dispatch_1780085798607.png";
-import expenditureImg from "./assets/images/expenditure_logging_1780085813916.png";
-import bankDepositImg from "./assets/images/bank_deposit_1780085832282.png";
+import posCheckoutImg from "./assets/images/pos_checkout_materials_1781520052748.jpg";
+import tbcDispatchImg from "./assets/images/tbc_materials_dispatch_1781520070813.jpg";
+import expenditureImg from "./assets/images/site_operational_expenditure_1781520088585.jpg";
+import bankDepositImg from "./assets/images/bank_deposit_controls_1781520105126.jpg";
 import staffEnrollmentImg from "./assets/images/staff_enrollment_1780085849054.png";
 import {
   ShoppingCart,
@@ -136,8 +136,14 @@ function MainAppContent() {
       try {
         wakeLock = await (navigator as any).wakeLock.request("screen");
         console.log("POS Screen Wake Lock active. Device will remain awake.");
-      } catch (err) {
-        console.warn("Screen Wake Lock request failed:", err);
+      } catch (err: any) {
+        // Quietly handle or downgrade the warning in development/preview iFrames where security policy disallows it
+        const isPolicyBlocked = err?.message?.includes("permissions policy") || err?.name === "NotAllowedError";
+        if (isPolicyBlocked) {
+          console.debug("Screen Wake Lock restricted by sandboxed workspace iframe permissions policy. (Expected preview sandbox behavior)");
+        } else {
+          console.warn("Screen Wake Lock request failed:", err);
+        }
       }
     };
 
@@ -416,33 +422,365 @@ function MainAppContent() {
                       printWindow.document.write(`
                         <html>
                           <head>
-                            <title>User Manual - Watasai Stone & Wara Wara Construction</title>
+                            <title>Operational User Handbook - Watasai Stone & Wara Wara Construction</title>
                             <style>
-                              body { font-family: system-ui, -apple-system, sans-serif; padding: 40px; color: #0f172a; line-height: 1.6; }
-                              h2 { color: #1e3a8a; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; text-transform: uppercase; margin-top: 0; }
-                              h4 { font-size: 15px; color: #1e3a8a; border-left: 4px solid #3b82f6; padding-left: 10px; margin-top: 25px; margin-bottom: 10px; font-weight: bold; }
-                              p, li { font-size: 13px; color: #334155; }
-                              strong { color: #0f172a; }
-                              .badge { font-weight: bold; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; }
-                              .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin: 15px 0; }
-                              .card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background: #f8fafc; }
-                              .footer { margin-top: 50px; border-top: 1px solid #cbd5e1; padding-top: 20px; text-align: center; font-size: 11px; color: #64748b; }
+                              /* CSS Reset & Variable overrides to force strict black-on-white text for readings */
+                              * {
+                                background-color: transparent !important;
+                                background-image: none !important;
+                                box-shadow: none !important;
+                                text-shadow: none !important;
+                              }
+                              body {
+                                font-family: "Times New Roman", Times, Georgia, serif !important;
+                                font-size: 13pt !important;
+                                line-height: 1.5 !important;
+                                color: #000000 !important;
+                                padding: 1.5cm !important;
+                                background-color: #ffffff !important;
+                                background: #ffffff !important;
+                              }
+                              h1, h2, h3, h4, h5, h6 {
+                                font-family: "Times New Roman", Times, Georgia, serif !important;
+                                font-weight: bold !important;
+                                color: #000000 !important;
+                                margin-top: 20px !important;
+                                margin-bottom: 10px !important;
+                                page-break-after: avoid !important;
+                              }
+                              h2 {
+                                font-size: 19pt !important;
+                                text-align: center !important;
+                                text-transform: uppercase !important;
+                                border-bottom: 2px solid #000000 !important;
+                                padding-bottom: 8px !important;
+                                margin-top: 0 !important;
+                                margin-bottom: 5px !important;
+                              }
+                              h3 {
+                                font-size: 16pt !important;
+                                border-bottom: 1px solid #000000 !important;
+                                padding-bottom: 4px !important;
+                                margin-top: 30px !important;
+                              }
+                              h4 {
+                                font-size: 14pt !important;
+                                border-left: 3px solid #000000 !important;
+                                padding-left: 10px !important;
+                                margin-top: 25px !important;
+                              }
+                              p, li, span, td, th {
+                                font-family: "Times New Roman", Times, Georgia, serif !important;
+                                font-size: 13pt !important;
+                                line-height: 1.5 !important;
+                                color: #000000 !important;
+                              }
+                              strong {
+                                font-weight: bold !important;
+                                color: #000000 !important;
+                              }
+                              ol, ul {
+                                margin-left: 20pt !important;
+                                margin-bottom: 15px !important;
+                              }
+                              li {
+                                margin-bottom: 6px !important;
+                                page-break-inside: avoid !important;
+                              }
+                              img {
+                                max-width: 90% !important;
+                                height: auto !important;
+                                display: block !important;
+                                margin: 20px auto !important;
+                                page-break-inside: avoid !important;
+                                border: 1px solid #cbd5e1 !important;
+                                padding: 4px !important;
+                              }
+                              div, section {
+                                background: transparent !important;
+                                background-color: transparent !important;
+                              }
+                              /* Map responsive grids and cards to simple blocks or printable sections */
+                              div[class*="grid"], div[class*="col"], div[class*="card"], div[class*="bg-"] {
+                                display: block !important;
+                                width: 100% !important;
+                                float: none !important;
+                                margin-bottom: 20px !important;
+                                padding: 15px !important;
+                                border: 1px solid #000000 !important;
+                                border-radius: 4px !important;
+                                page-break-inside: avoid !important;
+                              }
+                              .badge {
+                                font-family: "Courier New", Courier, monospace !important;
+                                font-weight: bold !important;
+                                font-size: 11pt !important;
+                                border: 1px solid #000000 !important;
+                                padding: 2px 4px !important;
+                                background: transparent !important;
+                              }
+                              .footer {
+                                margin-top: 50px !important;
+                                border-top: 1px solid #000000 !important;
+                                padding-top: 15px !important;
+                                text-align: center !important;
+                                font-size: 10pt !important;
+                                page-break-inside: avoid !important;
+                              }
+                              .no-print, button, .shrink-0, svg:not(.print-logo) {
+                                display: none !important;
+                              }
+
+                              /* Cover page styling designed specifically for portrait A4 printing */
+                              .cover-page {
+                                height: 26.7cm; /* Ensure standard A4 portrait boundary size */
+                                border: 3px double #000000;
+                                padding: 1.5cm;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: space-between;
+                                align-items: center;
+                                text-align: center;
+                                box-sizing: border-box;
+                                page-break-after: always !important;
+                                margin-bottom: 30px;
+                              }
+                              .cover-logo-wrapper {
+                                width: 100%;
+                                max-width: 750px;
+                                margin-top: 1cm;
+                              }
+                              .cover-titles {
+                                flex-grow: 1;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                margin-top: 1.5cm;
+                              }
+                              .cover-main-title {
+                                font-size: 26pt !important;
+                                font-weight: 900 !important;
+                                margin: 0 0 10px 0 !important;
+                                text-align: center !important;
+                                letter-spacing: 1px !important;
+                                line-height: 1.2 !important;
+                                font-family: "Times New Roman", Times, Georgia, serif !important;
+                              }
+                              .cover-subtitle {
+                                font-size: 18pt !important;
+                                font-weight: bold !important;
+                                letter-spacing: 3px !important;
+                                border-bottom: none !important;
+                                padding-bottom: 0 !important;
+                                margin-top: 10px !important;
+                                margin-bottom: 10px !important;
+                              }
+                              .cover-edition {
+                                font-size: 13pt !important;
+                                font-style: italic !important;
+                                font-weight: normal !important;
+                                margin-bottom: 10px !important;
+                              }
+                              .cover-divider {
+                                width: 150px;
+                                height: 2px;
+                                background-color: #000000 !important;
+                                margin: 20px auto !important;
+                              }
+                              .cover-version {
+                                font-family: "Courier New", Courier, monospace !important;
+                                font-weight: bold !important;
+                                font-size: 12pt !important;
+                                margin-top: 5px !important;
+                              }
+                              .cover-author-block {
+                                border: 1px solid #000000;
+                                padding: 20px;
+                                width: 85%;
+                                margin-top: 1.5cm;
+                                margin-bottom: 1.5cm;
+                                box-sizing: border-box;
+                              }
+                              .author-label {
+                                font-size: 10pt !important;
+                                font-weight: bold !important;
+                                text-transform: uppercase !important;
+                                letter-spacing: 1px !important;
+                                margin-bottom: 8px !important;
+                              }
+                              .author-name {
+                                font-size: 16pt !important;
+                                font-weight: bold !important;
+                                margin: 4px 0 !important;
+                              }
+                              .author-title {
+                                font-size: 12pt !important;
+                                font-style: italic !important;
+                                margin-bottom: 5px !important;
+                              }
+                              .author-email {
+                                font-size: 11pt !important;
+                                font-family: "Courier New", Courier, monospace !important;
+                              }
+                              .cover-footer-info {
+                                border-top: 1px solid #000000;
+                                padding-top: 15px;
+                                width: 100%;
+                              }
+                              .cover-footer-info p {
+                                font-size: 10.5pt !important;
+                                margin: 4px 0 !important;
+                              }
                             </style>
                           </head>
                           <body>
-                            <h2>📖 Wara Wara Stores & Sales App - Operational User Handbook</h2>
-                            <p style="font-size: 13px; color: #1e293b; margin-top: -8px; font-weight: bold; font-family: monospace;">
-                              Wara Wara Construction and general services , 8 Shekie Bockarie street Kabala . version 1.26
-                            </p>
-                            <p style="font-size: 11px; color: #64748b; text-transform: uppercase; margin-top: 4px; font-weight: bold;">
-                              Authoritative Systems Reference • Kabala Town, Koinadugu Zone, Sierra Leone
-                            </p>
+                            <!-- PORTRAIT COVER PAGE SECTION -->
+                            <div class="cover-page">
+                              <!-- Branding Vector Logo -->
+                              <div class="cover-logo-wrapper">
+                                <svg
+                                  viewBox="0 0 1000 240"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  class="print-logo"
+                                  style="width: 100%; max-height: 140px;"
+                                >
+                                  <g id="artwork">
+                                    {/* Mountain Peaks (Koinadugu Range) - Green layers */}
+                                    <polygon points="260,110 390,30 500,90 590,40 700,110" fill="#15803d" opacity="0.85" />
+                                    <polygon points="340,110 440,50 540,110" fill="#166534" />
+                                    <polygon points="460,110 560,35 660,110" fill="#14532d" opacity="0.9" />
+                                    {/* Snowy/Light Highlights on peaks */}
+                                    <polygon points="390,30 375,45 400,48" fill="#a7f3d0" />
+                                    <polygon points="590,40 575,55 600,58" fill="#a7f3d0" />
+                                    <polygon points="560,35 545,48 570,52" fill="#86efac" />
+                            
+                                    {/* Orange Excavator - Left Side */}
+                                    <g id="excavator" transform="translate(40, -10)">
+                                      {/* Tracks Base */}
+                                      <rect x="110" y="100" width="100" height="15" rx="7" fill="#1e293b" />
+                                      <line x1="120" y1="108" x2="200" y2="108" stroke="#ffffff" stroke-width="2" stroke-dasharray="4 3" />
+                                      {/* Main Cabin Body */}
+                                      <path d="M125,75 L165,75 L175,100 L120,100 Z" fill="#ea580c" />
+                                      <path d="M135,55 L155,55 L165,75 L130,75 Z" fill="#1e293b" /> {/* Drivers window */}
+                                      <rect x="138" y="59" width="12" height="11" fill="#bae6fd" />
+                                      {/* Hydraulic Arm */}
+                                      <path d="M165,80 L210,35 L200,30 L160,75 Z" fill="#ea580c" />
+                                      <path d="M205,33 L230,65 L245,60 L210,25 Z" fill="#ea580c" />
+                                      {/* Shovel Bucket */}
+                                      <path d="M230,65 C230,75 210,88 195,80 C190,75 195,68 210,68 C215,68 225,62 230,65 Z" fill="#1e293b" />
+                                      {/* Details */}
+                                      <circle cx="150" cy="108" r="5" fill="#475569" />
+                                      <circle cx="175" cy="108" r="5" fill="#475569" />
+                                    </g>
+                            
+                                    {/* High-Rise Buildings & Tower Crane - Right Side */}
+                                    <g id="crane-and-city" transform="translate(560, -5)">
+                                      {/* Skyline */}
+                                      <rect x="50" y="55" width="40" height="60" fill="#475569" />
+                                      <rect x="95" y="30" width="50" height="85" fill="#334155" />
+                                      <rect x="150" y="45" width="45" height="70" fill="#1e293b" />
+                                      <rect x="200" y="65" width="35" height="50" fill="#475569" />
+                                      {/* Windows on building */}
+                                      <rect x="105" y="40" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="120" y="40" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="135" y="40" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="105" y="60" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="120" y="60" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="135" y="60" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="105" y="80" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="120" y="80" width="8" height="10" fill="#cbd5e1" />
+                                      <rect x="135" y="80" width="8" height="10" fill="#cbd5e1" />
+                                      
+                                      <rect x="160" y="55" width="8" height="8" fill="#f1f5f9" />
+                                      <rect x="175" y="55" width="8" height="8" fill="#f1f5f9" />
+                                      <rect x="160" y="75" width="8" height="8" fill="#f1f5f9" />
+                                      <rect x="175" y="75" width="8" height="8" fill="#f1f5f9" />
+                            
+                                      {/* Construction Tower Crane */}
+                                      <line x1="185" y1="115" x2="185" y2="10" stroke="#0f172a" stroke-width="4" />
+                                      <line x1="100" y1="20" x2="250" y2="20" stroke="#0f172a" stroke-width="3" />
+                                      <line x1="250" y1="20" x2="185" y2="10" stroke="#ea580c" stroke-width="1.5" />
+                                      <line x1="100" y1="20" x2="185" y2="10" stroke="#ea580c" stroke-width="1.5" />
+                                      <line x1="185" y1="10" x2="185" y2="20" stroke="#ea580c" stroke-width="3" />
+                                      {/* Crane Hook */}
+                                      <line x1="230" y1="20" x2="230" y2="55" stroke="#334155" stroke-width="1.5" />
+                                      <path d="M227,55 C227,59 233,59 233,55" stroke="#1e293b" stroke-width="2" fill="none" />
+                                      {/* Counterweight */}
+                                      <rect x="120" y="15" width="20" height="10" fill="#ea580c" />
+                                    </g>
+                            
+                                    {/* Thick elegant ground base support line */}
+                                    <path d="M10,114 L990,114" stroke="#0f172a" stroke-width="5" stroke-linecap="round" />
+                                    <path d="M40,117 L960,117" stroke="#ea580c" stroke-width="3" stroke-linecap="round" />
+                                  </g>
+                            
+                                  {/* Corporate Bold Text Typography Section */}
+                                  <g id="typography">
+                                    <text
+                                      x="500"
+                                      y="178"
+                                      text-anchor="middle"
+                                      fill="#0c1d3a"
+                                      font-size="64"
+                                      font-weight="900"
+                                      font-style="oblique"
+                                      font-family="system-ui, -apple-system, sans-serif"
+                                      letter-spacing="4"
+                                    >
+                                      WARA WARA
+                                    </text>
+                            
+                                    <text
+                                      x="500"
+                                      y="218"
+                                      text-anchor="middle"
+                                      fill="#ea580c"
+                                      font-size="22"
+                                      font-weight="800"
+                                      font-family="system-ui, -apple-system, sans-serif"
+                                      letter-spacing="5"
+                                    >
+                                      CONSTRUCTION & GENERAL SERVICES
+                                    </text>
+                                  </g>
+                                </svg>
+                              </div>
+
+                              <div class="cover-titles">
+                                <h1 class="cover-main-title">Wara Wara Stores & Sales App</h1>
+                                <h2 class="cover-subtitle">Operational User Handbook</h2>
+                                <p class="cover-edition">Enterprise Resource Planning (ERP) Systems Reference Manual & Auditing Protocol</p>
+                                <div class="cover-divider"></div>
+                                <p class="cover-version">Authoritative Systems Version 1.26</p>
+                              </div>
+
+                              <!-- Author & Developer Information Block -->
+                              <div class="cover-author-block">
+                                <p class="author-label">Handbook Produced & Application Developed By</p>
+                                <p class="author-name">Andrew Yandi Yembeh Mansaray</p>
+                                <p class="author-title">Lead Software Developer</p>
+                                <p class="author-email">andrewdrive2025@gmail.com</p>
+                              </div>
+
+                              <div class="cover-footer-info font-serif">
+                                <p style="font-weight: bold; font-family: 'Times New Roman', serif;">Wara Wara Construction and General Services • Watasai Stone Investment</p>
+                                <p>Headquarters: 8 Shekie Bockarie Street, Kabala Town, Koinadugu District, Sierra Leone</p>
+                                <p style="font-size: 9.5pt !important; color: #444444 !important; font-family: 'Times New Roman', serif; margin-top: 6px;">
+                                  Confidential and proprietary. Approved for the exclusive operational training and audit workflows of manager Nabieu Conteh and accounting clerks.
+                                </p>
+                              </div>
+                            </div>
+
+                            <!-- MAIN MANUAL CONTENT (PAGE BREAK HANDLED BY THE NO-PRINT OVERRIDES AND PAGE WRAPPERS) -->
                             <div style="margin-top: 20px;">
                               ${printContent}
                             </div>
+                            
                             <div class="footer">
-                              <p>All rights reserved this software is a property of Wara Wara Construction and General Services and Wata Sai Stone Investment .</p>
-                              <p style="font-weight: bold; font-size: 11px;">Software built and managed by Andrew Tech Solutions (andrewdrive2025@gmail.com)</p>
+                              <p>All rights reserved. This software is the sole property of Wara Wara Construction and General Services and Wata Sai Stone Investment.</p>
+                              <p style="font-weight: bold; font-size: 11pt;">Handbook produced and application developed by Andrew Yandi Yembeh Mansaray, Software Developer (andrewdrive2025@gmail.com)</p>
                             </div>
                             <script>
                               window.onload = function() {
@@ -478,6 +816,9 @@ function MainAppContent() {
                   </span>
                   <p className="text-white text-xs font-mono font-semibold leading-relaxed tracking-wide">
                     Wara Wara Construction and general services , 8 Shekie Bockarie street Kabala . version 1.26
+                  </p>
+                  <p className="text-emerald-400 text-[11px] font-mono font-bold">
+                    Handbook Produced by Andrew Yandi Yembeh Mansaray, Software Developer
                   </p>
                 </div>
                 <div className="bg-emerald-950 text-emerald-400 font-mono text-[10px] font-extrabold px-3 py-1 rounded border border-emerald-800/60 uppercase shrink-0">
@@ -671,12 +1012,12 @@ function MainAppContent() {
 
               {/* Step 3: Clerk and Sales Operations */}
               <div className="space-y-4 pt-5 pb-5 border-t border-indigo-900/40">
-                <h4 className="text-indigo-200 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="bg-indigo-800 text-indigo-200 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">3</span>
+                <h4 className="text-indigo-250 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="bg-indigo-950 text-indigo-300 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">3</span>
                   Point-of-Sale (POS) Checkouts & Prepaid To-Be-Collected (TBC) Workflows
                 </h4>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-xs text-indigo-200">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 text-xs text-indigo-205">
                   
                   {/* Left Section: Standard POS Checkout steps */}
                   <div className="lg:col-span-4 bg-indigo-950/55 p-4 rounded-xl border border-indigo-900 flex flex-col justify-between">
@@ -686,7 +1027,7 @@ function MainAppContent() {
                       </p>
                       
                       {/* POS Diagram with Header and Footer Credits */}
-                      <div className="bg-[#0f172a] rounded-xl border border-indigo-900 overflow-hidden flex flex-col justify-between text-center mx-auto w-full shadow-md max-w-md">
+                      <div className="bg-[#0f172a] rounded-xl border border-indigo-900 overflow-hidden flex flex-col justify-between text-center mx-auto w-full shadow-md max-w-md animate-in fade-in duration-200">
                         <div className="bg-indigo-950 px-3 py-1.5 border-b border-indigo-900/60 text-left">
                           <span className="text-[9px] uppercase font-bold text-indigo-300 font-mono tracking-wider block leading-tight">Wara Wara Construction and general services , 8 Shekie Bockarie street Kabala . version 1.26</span>
                           <span className="text-[7.5px] text-slate-400 font-mono block mt-1">CASHIER CONSOLE SCHEMATIC</span>
@@ -696,7 +1037,7 @@ function MainAppContent() {
                             src={posCheckoutImg}
                             alt="Point of Sale checkout process diagram"
                             referrerPolicy="no-referrer"
-                            className="w-full h-auto object-contain rounded select-none max-h-[250px] mx-auto"
+                            className="w-full h-auto object-contain rounded select-none max-h-[250px] mx-auto transition-transform hover:scale-105 duration-200"
                           />
                         </div>
                         <div className="bg-indigo-950/80 px-2 py-1 border-t border-indigo-900/40 text-[8px] text-slate-400 font-mono text-center">
@@ -704,14 +1045,17 @@ function MainAppContent() {
                         </div>
                       </div>
 
-                      <ol className="list-decimal pl-5 space-y-1 text-slate-300 text-[11px] leading-relaxed">
+                      <ol className="list-decimal pl-5 space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
                         <li>Navigate to the <strong className="text-indigo-105">POS Cash Register</strong> workspace.</li>
                         <li>Verify that standard mode is selected in the toggle.</li>
                         <li>Click items in the Catalog card shelf to fill active cart slots.</li>
                         <li>Input checkout metadata identifiers (Customer billing Name, reference numbers).</li>
+                        <li>
+                          <strong>Physical Receipt Book Cross-Ref:</strong> Inside the special field marked <em>📖 Book Receipt No.</em>, key in the actual serial number printed on your paper, carbonized invoice book. This step is highly recommended for manual-to-digital audit reconciliations.
+                        </li>
                         <li>Select payment method: **Cash**, **Bank Cheque**, or **Mobile Money Wallet**.</li>
-                        <li>Input the exact paper cheque serial ID or network TXN reference hash if choosing bank/cheque/momo.</li>
-                        <li>Click <strong className="text-white">Finalize Cash Checkout</strong>. Real-time product counts decrease instantly, sales ledger tracks the transaction, and an instant paper invoice receipt is printed.</li>
+                        <li>Input the exact paper cheque serial ID or network TXN reference hash if choosing bank/cheque/mobile money.</li>
+                        <li>Click <strong className="text-white">Finalize Cash Checkout</strong>. Real-time product counts decrease instantly, sales ledger tracks the transaction, and an instant paper invoice receipt is printed containing the verified Book Reference.</li>
                       </ol>
                     </div>
                   </div>
@@ -730,7 +1074,7 @@ function MainAppContent() {
                       
                       <ol className="list-decimal pl-5 space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
                         <li>
-                          <strong>Register Prepayment:</strong> On the POS register, toggle the checkout type to <strong className="text-yellow-400">Prepaid TBC Registry Ticket</strong>, add client items, input patient billing name, choose collection ticket limits (14, 30, or 60 days limit), and click <strong className="text-white bg-indigo-700 px-1 py-0.5 rounded text-[10px]">Dispatch TBC Registration</strong>. Revenue is recorded today, but stock shelf counts are held secure.
+                          <strong>Register Prepayment:</strong> On the POS register, toggle the checkout type to <strong className="text-yellow-400">Prepaid TBC Registry Ticket</strong>, add client items, input patient billing name, enter the matching carbon paper slip serial in the **Book Receipt No.** field, choose collection ticket limits (14, 30, or 60 days limit), and click <strong className="text-white bg-indigo-700 px-1 py-0.5 rounded text-[10px]">Dispatch TBC Registration</strong>. Revenue is recorded today, but stock shelf counts are held secure.
                         </li>
                         <li>
                           <strong>Customer Warehouse Pickup:</strong> When the client or standard runner arrives to collect materials physically at the yard, navigate to the <strong className="text-white">Pre-Paid TBC Registry</strong> ledger.
@@ -778,15 +1122,108 @@ function MainAppContent() {
                 </div>
               </div>
 
-              {/* Step 4: Operational Expenditures */}
+              {/* Step 4: Physical Receipt Cross-Reference Core System */}
+              <div className="space-y-4 pt-5 pb-5 border-t border-indigo-900/40 text-xs text-indigo-200">
+                <h4 className="text-emerald-300 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="bg-emerald-950 text-emerald-300 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">4</span>
+                  Physical Carbon Receipt Book Cross-Reference Core System (Audit Trail Protocol)
+                </h4>
+                <div className="p-5 bg-indigo-950/60 rounded-xl border border-indigo-900 space-y-3.5 leading-relaxed text-slate-300">
+                  <p className="font-extrabold text-white text-[12px] bg-indigo-900 px-2 py-1 rounded w-fit uppercase">
+                    📖 Dual-Record Verification Safeguard: Paper Carbon Book vs. Digital Database
+                  </p>
+                  <p className="text-[11.5px] leading-relaxed text-slate-250">
+                    To maintain absolute compliance, absolute transparency, and prevent manual inventory leakage or financial discrepancies, Watasai Stone & Wara Wara Construction enforces a <strong>dual-record cross-reference policy</strong>. Every transaction originating from a physical carbon paper voucher or paper receipt book must be mapped directly into the digital database system using the <strong>Book Receipt No.</strong> field.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[11px] pt-1">
+                    <div className="p-3 bg-indigo-950/80 rounded-lg border border-indigo-900 space-y-1.5 animate-in fade-in duration-200">
+                      <strong className="text-emerald-300 block">🛍️ A. At POS Checkout (Standard Sales)</strong>
+                      <p>
+                        Before finalizing any cash or Mobile Money sale on the cash register, write the manual invoice in the carbon book, tear out the slip for the client, and immediately key that same book invoice serial ID (e.g. <em>WR-9852</em>) into the <strong>Book Receipt No.</strong> field in the active checkout drawer.
+                      </p>
+                    </div>
+                    <div className="p-3 bg-indigo-950/80 rounded-lg border border-indigo-900 space-y-1.5 animate-in fade-in duration-200">
+                      <strong className="text-yellow-400 block">📦 B. Inside TBC Registry (Prepaid Bookings)</strong>
+                      <p>
+                        When registering to-be-collected prepaid orders, the matching carbon paper voucher number must be entered in the Book Receipt field. When the client returns for split dispatches at the yard gate, the gatekeeper cross-references the digital remaining balance alongside physical paper voucher signatures.
+                      </p>
+                    </div>
+                    <div className="p-3 bg-indigo-950/80 rounded-lg border border-indigo-905 space-y-1.5 animate-in fade-in duration-200">
+                      <strong className="text-blue-300 block">💳 C. On the Credit Board (Debt Ledger)</strong>
+                      <p>
+                        For corporate or community credits, the carbonized credit security note's page serial number underpins the legal contract file. Recording this <strong>Book Receipt No.</strong> allows management to query and inspect signed physical contracts in file cabinets when reviewing credit repays.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-3.5 bg-slate-905/30 rounded-lg border border-indigo-900 text-[11px] space-y-2 text-slate-300">
+                    <p className="font-bold text-white flex items-center gap-1.5 text-xs text-indigo-300">
+                      <span>📌</span> AUDITING INSTRUCTIONS FOR NABIEU CONTEH & ACCOUNTING CLERKS:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1 text-slate-200">
+                      <li>Whenever auditing database journals, check for the green <strong>📖 Book Ref</strong> badges. Any invoice lacking a Book Receipt identifier is non-compliant and must be immediately reconciled with the physical counter sheets.</li>
+                      <li>In both the <strong>Credit Board Directory</strong> and the <strong>Pre-Paid TBC Registry</strong>, the paper book serial identifier is displayed prominently at the header of each file card for quick manual-to-digital validations.</li>
+                      <li>Any discrepancies between physical inventory stocks remaining in the compound yard and digital metrics can be resolved by counting the physical carbon copies corresponding to the flagged material SKU range.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 5: Debtor and Credit Management */}
+              <div className="space-y-4 pt-5 pb-5 border-t border-indigo-900/40 text-xs text-indigo-200">
+                <h4 className="text-indigo-300 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="bg-indigo-950 text-indigo-300 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">5</span>
+                  Credit Registry Board, Repayment Ledgers & Debt Collection Call Logs
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-indigo-950/50 rounded-xl border border-indigo-900 space-y-3 leading-relaxed">
+                    <p className="font-bold text-white bg-indigo-900 p-1.5 rounded uppercase">💳 Registering Credit Sales & Upfront Downpayments</p>
+                    <p className="text-slate-300 text-[11px] leading-relaxed">
+                      When customers take goods on credit, select the Checkout Toggle and shift to <strong className="text-yellow-400">Register Credit</strong>. Add the materials to Cart.
+                    </p>
+                    <ol className="list-decimal pl-5 space-y-1 text-slate-300 text-[11px] leading-relaxed">
+                      <li>Enter customer full legal name and key-in an active, reachable <strong>Primary phone number</strong>.</li>
+                      <li>In the optional physical book receipt book number field, input the carbonized paper voucher ID.</li>
+                      <li>Specify the upfront <strong>Downpayment Amount Paid Today</strong> (SLe). The remaining liability is automatically calculated (Remaining = Total Cart Cost - Paid).</li>
+                      <li>Specify the <strong>Due Date Days</strong> limit (e.g. 15, 30 days deadline).</li>
+                      <li>Click <strong className="text-white font-bold bg-indigo-700 px-1 py-0.5 rounded text-[9px]">Finalize Credit Registration</strong>. This immediately decrements yard stock (since the customer leaves with products), logs a sales record for the paid downpayment in the central ledger, and populates a new debtor card in the Credit Board.</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-4 bg-indigo-950/50 rounded-xl border border-indigo-900 space-y-3 leading-relaxed">
+                    <p className="font-bold text-white bg-indigo-900 p-1.5 rounded uppercase">📞 Tracking Repayments & Follow-Up Phone Logs</p>
+                    <p className="text-slate-300 text-[11px] leading-relaxed">
+                      Management can monitor active debts, sort profiles by financial health indicators, and log contact engagements:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
+                      <li>
+                        <strong>Recording Installments:</strong> Click the card's repayment options under Credit Board and select <strong className="text-white">Collect Repayment</strong>. Key-in the exact paid cash amount. The remaining running liability updates instantly. Every installment logs the date, amount, and active cashier operator.
+                      </li>
+                      <li>
+                        <strong>Logging Dial Contacts:</strong> Click the blue follow-up dial button. Select the explicit phone call outcome from the checklist:
+                        <div className="my-1 pl-4 font-mono text-[9px] text-amber-300 bg-slate-950/40 p-1 rounded space-y-0.5">
+                          <p>📱 Promised Payment (Committed date details)</p>
+                          <p>📱 No Answer (Did not respond to call lines)</p>
+                          <p>📱 Line Switched Off (Network unreachable)</p>
+                          <p>📱 Refused to Pay (Hostile communication)</p>
+                          <p>📱 Contacted Guarantor (Called legal cosigner)</p>
+                        </div>
+                        Type detailed notes of the contact summary and click Enrol. A sequential thread of contact engagement is logged to guard against debtor disputes.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 6: Operational Expenditures */}
               <div className="space-y-4 pt-5 pb-5 border-t border-indigo-900/40 text-xs text-indigo-205">
                 <h4 className="text-indigo-300 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="bg-indigo-800 text-indigo-200 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">4</span>
+                  <span className="bg-indigo-950 text-indigo-300 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">6</span>
                   Step-by-Step Logging of Operational Site Expenditures
                 </h4>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
                   <div className="lg:col-span-8 space-y-3 leading-relaxed text-slate-300 text-xs">
-                    <p className="leading-relaxed font-sans font-sans">
+                    <p className="leading-relaxed font-sans">
                       To successfully log site expenditure and decrement central funds, go through these steps:
                     </p>
                     <ol className="list-decimal pl-5 space-y-1.5 text-[11px] text-slate-300 font-sans leading-relaxed">
@@ -797,7 +1234,7 @@ function MainAppContent() {
                         <strong>Access Security Level:</strong> Ensure that you are an authorized personnel Clerk or Administrator Nabieu Conteh (both have active credentials to document day-to-day expenditures).
                       </li>
                       <li>
-                        <strong>Choose Expense Category:</strong> Select the matching class of operational expenditure via the Category dropdown (e.g. ⛽ Fuel, 🚖 Staff Transport, 🛠️ Site Repairs, 🔋 Utility/Comm, 👮 Site Security).
+                        <strong>Choose Expense Category:</strong> Select the matching class of operational expenditure via the Category dropdown (e.g. ⛽ Fuel/Lubricants, 🚖 Staff Transport, 🛠️ Site Repairs, 🔋 Utility/Comm, 👮 Site Security, or 📦 General Miscellany).
                       </li>
                       <li>
                         <strong>Specify Amount (SLe):</strong> Input the precise expendable amount down to Leones in the Amount field.
@@ -842,10 +1279,10 @@ function MainAppContent() {
                 </div>
               </div>
 
-              {/* Step 5: Commercial Banking Deposits & Bank Cheques (Asset Reconciliation) */}
+              {/* Step 7: Commercial Banking Deposits & Bank Cheques (Asset Reconciliation) */}
               <div className="space-y-4 pt-5 pb-5 border-t border-indigo-900/40 text-xs text-indigo-205">
                 <h4 className="text-emerald-300 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="bg-emerald-950 text-emerald-300 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">5</span>
+                  <span className="bg-emerald-950 text-emerald-300 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">7</span>
                   Commercial Banking Deposits & Bank Cheque Controls (Asset Reconciliation)
                 </h4>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
@@ -903,10 +1340,10 @@ function MainAppContent() {
                 </div>
               </div>
 
-              {/* Step 6: Company Header Letterhead and Contacts */}
+              {/* Step 8: Company Header Letterhead and Contacts */}
               <div className="space-y-3 pt-5 text-xs text-indigo-205 border-t border-indigo-900/40">
                 <h4 className="text-indigo-305 font-bold text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="bg-indigo-800 text-indigo-200 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">6</span>
+                  <span className="bg-indigo-800 text-indigo-200 h-5 w-5 rounded-full flex items-center justify-center text-[10px]">8</span>
                   Company Branded Information & Printable Reports Header
                 </h4>
                 <div className="p-4 bg-slate-900/60 rounded-xl border border-indigo-900 space-y-2 text-indigo-100 text-xs">

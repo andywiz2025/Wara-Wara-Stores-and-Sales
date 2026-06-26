@@ -38,6 +38,7 @@ export interface Sale {
   payment_method: "cash" | "cheque" | "mobile_money" | "tbc" | "credit";
   reference_details?: string;
   items: SaleItem[];
+  physical_receipt_no?: string;
 }
 
 export interface CreditRepayment {
@@ -69,6 +70,7 @@ export interface CreditRegistry {
   recorded_by: string;
   repayments?: CreditRepayment[];
   follow_ups?: CreditFollowUp[];
+  physical_receipt_no?: string;
 }
 
 export interface TBCItem {
@@ -102,6 +104,8 @@ export interface TBCRegistry {
   collected_by: string | null;
   collected_at: any | null; // Firestore Timestamp, Date, or string representation
   collections?: TBCCollectionRecord[]; // Separate collection history logs
+  timestamp?: any; // Firestore Timestamp, Date, or string representation
+  physical_receipt_no?: string;
 }
 
 // Notification structure for expired TBCs or alerts

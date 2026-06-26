@@ -94,6 +94,7 @@ export async function processImmediateSale(params: {
   paymentMethod: "cash" | "cheque" | "mobile_money";
   referenceDetails?: string;
   customerName?: string;
+  physicalReceiptNo?: string;
 }): Promise<string> {
   const salesPath = "sales_ledger";
   const productsPath = "products";
@@ -114,7 +115,8 @@ export async function processImmediateSale(params: {
       total_amount: params.totalAmount,
       payment_method: params.paymentMethod,
       reference_details: params.referenceDetails || "",
-      items: params.items
+      items: params.items,
+      physical_receipt_no: params.physicalReceiptNo || ""
     };
 
     batch.set(newSaleDocRef, salePayload);
@@ -147,6 +149,7 @@ export async function registerTBCOrder(params: {
   totalAmount: number;
   expiryDays: number;
   staffName: string;
+  physicalReceiptNo?: string;
 }): Promise<void> {
   const tbcPath = "tbc_registry";
   const salesLedgerPath = "sales_ledger";
@@ -164,7 +167,8 @@ export async function registerTBCOrder(params: {
       status: "pending",
       expiry_date: expiryDateStamp,
       collected_by: null,
-      collected_at: null
+      collected_at: null,
+      physical_receipt_no: params.physicalReceiptNo || ""
     };
 
     const saleId = `SALE-TBC-${params.tbcId.slice(-6).toUpperCase()}`;
@@ -183,7 +187,8 @@ export async function registerTBCOrder(params: {
         name: i.name,
         quantity: i.quantity,
         unit_cost: i.unit_cost
-      }))
+      })),
+      physical_receipt_no: params.physicalReceiptNo || ""
     };
 
     const batch = writeBatch(db);
@@ -383,6 +388,7 @@ export async function registerCreditSale(params: {
   remainingBalance: number;
   dueDateDays: number;
   staffName: string;
+  physicalReceiptNo?: string;
 }): Promise<void> {
   const creditsPath = "credits_registry";
   const salesLedgerPath = "sales_ledger";
@@ -414,7 +420,8 @@ export async function registerCreditSale(params: {
           timestamp: new Date().toISOString(),
           recorded_by: params.staffName
         }
-      ] : []
+      ] : [],
+      physical_receipt_no: params.physicalReceiptNo || ""
     };
 
     const saleId = `SALE-CRD-${params.creditId.slice(-6).toUpperCase()}`;
@@ -428,7 +435,8 @@ export async function registerCreditSale(params: {
       total_amount: params.amountPaid,
       payment_method: "credit",
       reference_details: `Credit Ticket ID: ${params.creditId}. Initial Paid: SLe ${params.amountPaid}`,
-      items: params.items
+      items: params.items,
+      physical_receipt_no: params.physicalReceiptNo || ""
     };
 
     const batch = writeBatch(db);

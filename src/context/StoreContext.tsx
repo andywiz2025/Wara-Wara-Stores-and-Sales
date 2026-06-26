@@ -83,12 +83,14 @@ interface StoreContextType {
     items: { product_id: string; name: string; quantity: number; unit_cost: number }[],
     paymentMethod: "cash" | "cheque" | "mobile_money",
     reference?: string,
-    customerName?: string
+    customerName?: string,
+    physicalReceiptNo?: string
   ) => Promise<string>;
   executeTBCRegistration: (
     customerName: string,
     items: { product_id: string; name: string; quantity: number; unit_cost: number; total: number }[],
-    expiryDays: number
+    expiryDays: number,
+    physicalReceiptNo?: string
   ) => Promise<void>;
   executeTBCCollection: (
     tbcId: string,
@@ -101,7 +103,8 @@ interface StoreContextType {
     customerPhone: string,
     items: { product_id: string; name: string; quantity: number; unit_cost: number }[],
     amountPaid: number,
-    dueDateDays: number
+    dueDateDays: number,
+    physicalReceiptNo?: string
   ) => Promise<string>;
   executeCreditRepayment: (
     creditId: string,
@@ -142,6 +145,29 @@ interface StoreContextType {
   categories: string[];
   executeAddCategory: (name: string) => Promise<void>;
   executeDeleteCategory: (name: string) => Promise<void>;
+}
+
+// Helper utility to safely convert various timestamp formats into milliseconds for consistent sorting
+export function getTimestampMs(t: any): number {
+  if (!t) return 0;
+  if (typeof t === "object") {
+    if ("seconds" in t) {
+      return t.seconds * 1000 + Math.floor((t.nanoseconds || 0) / 1000000);
+    }
+    if (t instanceof Date) {
+      return t.getTime();
+    }
+  }
+  if (typeof t === "string") {
+    const parsed = new Date(t).getTime();
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
+export function getTbcTimeMs(t: TBCRegistry): number {
+  const dateValue = t.timestamp || t.expiry_date || t.collected_at;
+  return getTimestampMs(dateValue);
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -496,9 +522,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setCategories(["Tools", "Plumbing", "Electrical", "Hardware", "Building Materials"]);
       }
 
-      if (localSales) setSales(JSON.parse(localSales));
-      if (localTbcs) setTbcs(JSON.parse(localTbcs));
-      if (localCredits) setCredits(JSON.parse(localCredits));
+      if (localSales) {
+        const list: Sale[] = JSON.parse(localSales);
+        setSales(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
+      }
+      if (localTbcs) {
+        const list: TBCRegistry[] = JSON.parse(localTbcs);
+        setTbcs(list.sort((a, b) => getTbcTimeMs(b) - getTbcTimeMs(a)));
+      }
+      if (localCredits) {
+        const list: CreditRegistry[] = JSON.parse(localCredits);
+        setCredits(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
+      }
       if (localStaff) {
         const loaded: StaffProfile[] = JSON.parse(localStaff);
         const defaultProfiles: StaffProfile[] = [
@@ -584,19 +619,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (localAlerts) {
-        setNotifications(JSON.parse(localAlerts));
+        const list: StoreNotification[] = JSON.parse(localAlerts);
+        setNotifications(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       } else {
         setNotifications([]);
       }
 
       if (localExpenditures) {
-        setExpenditures(JSON.parse(localExpenditures));
+        const list: Expenditure[] = JSON.parse(localExpenditures);
+        setExpenditures(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       } else {
         setExpenditures([]);
       }
 
       if (localBankDeposits) {
-        setBankDeposits(JSON.parse(localBankDeposits));
+        const list: BankDeposit[] = JSON.parse(localBankDeposits);
+        setBankDeposits(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       } else {
         setBankDeposits([]);
       }
@@ -632,13 +670,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           // Handle Firestore Timestamp to JS conversions
           list.push(s);
         });
-        setSales(list.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds || 0));
+        setSales(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       }, (err) => console.error("Snapshot error sales:", err));
 
       const unsubTbcs = onSnapshot(collection(db, "tbc_registry"), (snap) => {
         const list: TBCRegistry[] = [];
         snap.forEach((d) => list.push(d.data() as TBCRegistry));
-        setTbcs(list);
+        setTbcs(list.sort((a, b) => getTbcTimeMs(b) - getTbcTimeMs(a)));
       }, (err) => console.error("Snapshot error tbcs:", err));
 
       const unsubStaff = onSnapshot(collection(db, "staff_profiles"), (snap) => {
@@ -683,33 +721,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const unsubNotifications = onSnapshot(collection(db, "notifications"), (snap) => {
         const list: StoreNotification[] = [];
         snap.forEach((d) => list.push(d.data() as StoreNotification));
-        setNotifications(list);
+        setNotifications(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       }, (err) => console.error("Snapshot error alerts:", err));
 
       const unsubExpenditures = onSnapshot(collection(db, "expenditures"), (snap) => {
         const list: Expenditure[] = [];
         snap.forEach((d) => list.push(d.data() as Expenditure));
-        setExpenditures(list.sort((a, b) => {
-          const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
-          const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
-          return (bTime || 0) - (aTime || 0);
-        }));
+        setExpenditures(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       }, (err) => console.error("Snapshot error expenditures:", err));
 
       const unsubBankDeposits = onSnapshot(collection(db, "bank_deposits"), (snap) => {
         const list: BankDeposit[] = [];
         snap.forEach((d) => list.push(d.data() as BankDeposit));
-        setBankDeposits(list.sort((a, b) => {
-          const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
-          const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
-          return (bTime || 0) - (aTime || 0);
-        }));
+        setBankDeposits(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       }, (err) => console.error("Snapshot error bank_deposits:", err));
 
       const unsubCredits = onSnapshot(collection(db, "credits_registry"), (snap) => {
         const list: CreditRegistry[] = [];
         snap.forEach((d) => list.push(d.data() as CreditRegistry));
-        setCredits(list);
+        setCredits(list.sort((a, b) => getTimestampMs(b.timestamp) - getTimestampMs(a.timestamp)));
       }, (err) => console.error("Snapshot error credits:", err));
 
       const unsubCategories = onSnapshot(collection(db, "goods_categories"), (snap) => {
@@ -1160,7 +1190,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     items: { product_id: string; name: string; quantity: number; unit_cost: number }[],
     paymentMethod: "cash" | "cheque" | "mobile_money",
     reference?: string,
-    customerName?: string
+    customerName?: string,
+    physicalReceiptNo?: string
   ): Promise<string> => {
     if (!currentUser) throw new Error("No staff active");
     if (!currentUser.permissions.can_process_sales && currentUser.role !== "admin") {
@@ -1177,7 +1208,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       total_amount: totalAmount,
       payment_method: paymentMethod,
       reference_details: reference,
-      items
+      items,
+      physical_receipt_no: physicalReceiptNo || ""
     };
 
     // Decrement stock in local state immediately
@@ -1205,7 +1237,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             totalAmount,
             paymentMethod,
             referenceDetails: reference,
-            customerName: customerName || "Walk-in Customer"
+            customerName: customerName || "Walk-in Customer",
+            physicalReceiptNo: physicalReceiptNo
           });
           triggerNotification(`Immediate sale recorded: Invoice #${saleId.slice(-6).toUpperCase()} total SLe ${totalAmount}. Stock deducted.`);
         } catch (err) {
@@ -1238,7 +1271,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const executeTBCRegistration = async (
     customerName: string,
     items: { product_id: string; name: string; quantity: number; unit_cost: number; total: number }[],
-    expiryDays: number
+    expiryDays: number,
+    physicalReceiptNo?: string
   ) => {
     if (!currentUser) throw new Error("No staff activated");
     if (!currentUser.permissions.can_process_sales && currentUser.role !== "admin") {
@@ -1258,7 +1292,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       status: "pending",
       expiry_date: expiry.toISOString(),
       collected_by: null,
-      collected_at: null
+      collected_at: null,
+      timestamp: new Date().toISOString(),
+      physical_receipt_no: physicalReceiptNo || ""
     };
 
     const saleId = `SALE-TBC-${tbcId.slice(-6).toUpperCase()}`;
@@ -1275,7 +1311,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         name: i.name,
         quantity: i.quantity,
         unit_cost: i.unit_cost
-      }))
+      })),
+      physical_receipt_no: physicalReceiptNo || ""
     };
 
     const updatedSales = [newSale, ...sales];
@@ -1295,7 +1332,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             items,
             totalAmount,
             expiryDays,
-            staffName: currentUser.name
+            staffName: currentUser.name,
+            physicalReceiptNo: physicalReceiptNo
           });
           triggerNotification(`Prepaid TBC Sale Registered & Added to Revenue for ${customerName}. Ticket ID: ${tbcId}. Total: SLe ${totalAmount}. No stock deducted yet.`, "info");
         } catch (err) {
@@ -1328,7 +1366,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     customerPhone: string,
     items: { product_id: string; name: string; quantity: number; unit_cost: number }[],
     amountPaid: number,
-    dueDateDays: number
+    dueDateDays: number,
+    physicalReceiptNo?: string
   ): Promise<string> => {
     if (!currentUser) throw new Error("No staff active");
     if (!currentUser.permissions.can_process_sales && currentUser.role !== "admin") {
@@ -1361,7 +1400,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           timestamp: new Date().toISOString(),
           recorded_by: currentUser.name
         }
-      ] : []
+      ] : [],
+      physical_receipt_no: physicalReceiptNo || ""
     };
 
     // Create a sale record in standard sales ledger
@@ -1374,7 +1414,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       total_amount: amountPaid,
       payment_method: "credit",
       reference_details: `Credit Ticket ID: ${creditId}. Initial Paid: SLe ${amountPaid}`,
-      items: items.map(i => ({ product_id: i.product_id, name: i.name, quantity: i.quantity, unit_cost: i.unit_cost }))
+      items: items.map(i => ({ product_id: i.product_id, name: i.name, quantity: i.quantity, unit_cost: i.unit_cost })),
+      physical_receipt_no: physicalReceiptNo || ""
     };
 
     // Decrement stock immediately since customer takes goods on credit
@@ -1410,7 +1451,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             amountPaid,
             remainingBalance,
             dueDateDays,
-            staffName: currentUser.name
+            staffName: currentUser.name,
+            physicalReceiptNo: physicalReceiptNo
           });
           triggerNotification(`Credit Sale registered for ${customerName}. Ticket ID: ${creditId}. Total: SLe ${totalAmount}. Stock deducted.`);
         } catch (err) {

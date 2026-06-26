@@ -215,6 +215,12 @@ export default function TBCBoard() {
                     Ticket ID: {t.tbc_id.slice(-8)}
                   </span>
 
+                  {t.physical_receipt_no && (
+                    <span className="text-[9px] font-mono font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-150 px-2 py-0.5 rounded flex items-center gap-0.5" title="Physical Receipt Book Cross-Reference">
+                      📖 Book No: {t.physical_receipt_no}
+                    </span>
+                  )}
+
                   {isPending && (
                     <span className="text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 animate-pulse" /> PENDING DISPATCH
@@ -291,7 +297,18 @@ export default function TBCBoard() {
                       <span>📋</span> Individual Cargo Pickup Receipts ({t.collections.length})
                     </p>
                     <ul className="space-y-1.5">
-                      {t.collections.map((col, cId) => (
+                      {[...t.collections]
+                        .sort((a, b) => {
+                          const getColTime = (dateValue: any) => {
+                            if (!dateValue) return 0;
+                            if (typeof dateValue === "object" && "seconds" in dateValue) {
+                              return dateValue.seconds * 1000;
+                            }
+                            return new Date(dateValue).getTime() || 0;
+                          };
+                          return getColTime(b.collected_at) - getColTime(a.collected_at);
+                        })
+                        .map((col, cId) => (
                         <li key={cId} className="bg-white p-2 rounded-lg border border-slate-201/80 text-[11px] flex justify-between items-center gap-2 shadow-2xs font-sans">
                           <div className="flex-1 space-y-0.5 text-left leading-tight">
                             <div className="flex items-center gap-1.5 flex-wrap">
@@ -705,9 +722,23 @@ export default function TBCBoard() {
                 Close Receipt
               </button>
               <button
-                type="button"
                 onClick={() => {
-                  window.print();
+                  if (!selectedReceiptForPrint) return;
+                  const receiptElement = document.getElementById("wara-wara-invoice-ticket");
+                  if (!receiptElement) return;
+
+                  // Create temporary print container
+                  const chamber = document.createElement("div");
+                  chamber.id = "thermal-print-chamber";
+                  chamber.className = receiptElement.className;
+                  chamber.innerHTML = receiptElement.innerHTML;
+                  document.body.appendChild(chamber);
+
+                  // Delay print dialog to allow browser to completely reflow and paint the new node in the DOM render tree
+                  setTimeout(() => {
+                    window.print();
+                    document.body.removeChild(chamber);
+                  }, 300);
                 }}
                 className="flex-1 bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-extrabold py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
               >

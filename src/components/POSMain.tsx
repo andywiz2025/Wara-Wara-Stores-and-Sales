@@ -25,6 +25,7 @@ export default function POSMain() {
   // Direct Sales fields
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "cheque" | "mobile_money">("cash");
   const [reference, setReference] = useState("");
+  const [physicalReceiptNo, setPhysicalReceiptNo] = useState("");
 
   // TBC / Credit fields
   const [customerName, setCustomerName] = useState("");
@@ -118,6 +119,7 @@ export default function POSMain() {
     setCustomerName("");
     setCustomerPhone("");
     setAmountPaid(0);
+    setPhysicalReceiptNo("");
   };
 
   const calculateTotal = () => {
@@ -146,7 +148,7 @@ export default function POSMain() {
 
         const cleanCustName = customerName.trim() || "Walk-In Customer";
 
-        const saleId = await executeImmediateSale(itemsPayload, paymentMethod, reference, cleanCustName);
+        const saleId = await executeImmediateSale(itemsPayload, paymentMethod, reference, cleanCustName, physicalReceiptNo);
         setSuccessMsg(`Immediate transactional checkout registered successfully! Invoice #${saleId.slice(-6).toUpperCase()}`);
         
         // Populate printable receipt
@@ -158,12 +160,14 @@ export default function POSMain() {
           payment_method: paymentMethod,
           reference_details: reference || "N/A (Cash direct)",
           items: itemsPayload,
-          total_amount: grossTotal
+          total_amount: grossTotal,
+          physical_receipt_no: physicalReceiptNo
         });
 
         setCart([]);
         setReference("");
         setCustomerName("");
+        setPhysicalReceiptNo("");
       } else if (transactionType === "tbc") {
         // Prepare TBC Draft
         if (!customerName.trim()) {
@@ -180,7 +184,7 @@ export default function POSMain() {
           total: item.product.unit_price * item.quantity
         }));
 
-        await executeTBCRegistration(customerName, itemsPayload, expiryDays);
+        await executeTBCRegistration(customerName, itemsPayload, expiryDays, physicalReceiptNo);
         setSuccessMsg(`TBC Registration completed for ${customerName}! Items scheduled for subsequent collection.`);
         
         // Populate printable collection ticket
@@ -197,11 +201,13 @@ export default function POSMain() {
             quantity: i.quantity,
             unit_cost: i.unit_cost
           })),
-          total_amount: grossTotal
+          total_amount: grossTotal,
+          physical_receipt_no: physicalReceiptNo
         });
 
         setCart([]);
         setCustomerName("");
+        setPhysicalReceiptNo("");
       } else {
         // Prepare Credit Sale
         if (!customerName.trim()) {
@@ -232,7 +238,8 @@ export default function POSMain() {
           customerPhone.trim(),
           itemsPayload,
           amountPaid,
-          dueDateDays
+          dueDateDays,
+          physicalReceiptNo
         );
 
         setSuccessMsg(`Credit ledger invoice created for ${customerName}! Ticket ID: ${creditId}`);
@@ -248,13 +255,15 @@ export default function POSMain() {
           total_amount: grossTotal,
           amount_paid: amountPaid,
           remaining_balance: grossTotal - amountPaid,
-          is_credit: true
+          is_credit: true,
+          physical_receipt_no: physicalReceiptNo
         });
 
         setCart([]);
         setCustomerName("");
         setCustomerPhone("");
         setAmountPaid(0);
+        setPhysicalReceiptNo("");
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to finalize checkout.");
@@ -560,7 +569,7 @@ export default function POSMain() {
                       <label className="block text-[10px] font-medium text-slate-500 mb-1">
                         {paymentMethod === "cheque"
                           ? "Bank Cheque Serial Number"
-                          : "MoMo Pay Transaction Receipt ID"}
+                          : "Mobile Money (Orange & Afrimoney) Reference ID"}
                       </label>
                       <input
                         type="text"
@@ -688,6 +697,21 @@ export default function POSMain() {
                 </div>
               )}
 
+              {/* Physical receipt book cross-reference entry */}
+              <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <label className="block text-[10px] font-bold text-slate-600 mb-1 flex justify-between items-center">
+                  <span>📖 PHYSICAL RECEIPT BOOK NO. <span className="text-slate-400 font-normal">(Optional)</span></span>
+                  <span className="text-[9px] bg-slate-200/80 text-slate-700 px-1 py-0.5 rounded font-mono font-medium">Cross-Ref</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. BOOK-12 / RCPT-098"
+                  value={physicalReceiptNo}
+                  onChange={(e) => setPhysicalReceiptNo(e.target.value)}
+                  className="w-full px-2.5 py-1 text-xs bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono text-slate-800 font-semibold"
+                />
+              </div>
+
               {/* Submit Buttons */}
               <button
                 type="submit"
@@ -785,6 +809,14 @@ export default function POSMain() {
                     {printedReceipt.reference_details}
                   </p>
                 </div>
+                {printedReceipt.physical_receipt_no && (
+                  <div>
+                    <span className="text-slate-400 font-sans block text-[10px] tracking-tight">PHYSICAL BOOK RCPT</span>
+                    <p className="font-extrabold text-emerald-700 dark:text-emerald-600 font-mono tracking-wide">
+                      {printedReceipt.physical_receipt_no}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="border-b border-dashed border-slate-300"></div>
@@ -882,7 +914,22 @@ export default function POSMain() {
               <button
                 type="button"
                 onClick={() => {
-                  window.print();
+                  if (!printedReceipt) return;
+                  const receiptElement = document.getElementById("wara-wara-invoice-ticket");
+                  if (!receiptElement) return;
+
+                  // Create temporary print container
+                  const chamber = document.createElement("div");
+                  chamber.id = "thermal-print-chamber";
+                  chamber.className = receiptElement.className;
+                  chamber.innerHTML = receiptElement.innerHTML;
+                  document.body.appendChild(chamber);
+
+                  // Delay print dialog to allow browser to completely reflow and paint the new node in the DOM render tree
+                  setTimeout(() => {
+                    window.print();
+                    document.body.removeChild(chamber);
+                  }, 300);
                 }}
                 className="flex-1 bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-extrabold py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
               >

@@ -449,6 +449,11 @@ export default function CreditBoard() {
                         <span className="text-[10px] font-mono text-indigo-600 tracking-tight mt-0.5 font-bold">
                           {c.credit_id}
                         </span>
+                        {c.physical_receipt_no && (
+                          <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-120 font-extrabold w-fit mt-1 self-start select-all" title="Physical Receipt Book Reference">
+                            📖 Book No: {c.physical_receipt_no}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-4 font-mono text-slate-500">
@@ -674,7 +679,13 @@ export default function CreditBoard() {
                 </div>
                 <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
                   {viewingHistory.repayments && viewingHistory.repayments.length > 0 ? (
-                    viewingHistory.repayments.map((rep) => (
+                    [...viewingHistory.repayments]
+                      .sort((a, b) => {
+                        const aTime = new Date(a.timestamp).getTime() || 0;
+                        const bTime = new Date(b.timestamp).getTime() || 0;
+                        return bTime - aTime;
+                      })
+                      .map((rep) => (
                       <div key={rep.repayment_id} className="p-2.5 text-xs grid grid-cols-4 items-center">
                         <span className="font-mono text-[9px] text-slate-500 truncate">{rep.repayment_id}</span>
                         <span className="text-slate-600">{new Date(rep.timestamp).toLocaleDateString("en-GB")}</span>
@@ -921,7 +932,13 @@ export default function CreditBoard() {
 
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                 {showFollowUpHistoryCredit.follow_ups && showFollowUpHistoryCredit.follow_ups.length > 0 ? (
-                  showFollowUpHistoryCredit.follow_ups.map((fu, idx) => {
+                  [...showFollowUpHistoryCredit.follow_ups]
+                    .sort((a, b) => {
+                      const aTime = new Date(a.timestamp).getTime() || 0;
+                      const bTime = new Date(b.timestamp).getTime() || 0;
+                      return bTime - aTime;
+                    })
+                    .map((fu, idx) => {
                     const outcomeLabels: Record<string, string> = {
                       promised_payment: "💵 Promised Payment",
                       no_answer: "🔇 No Answer",
